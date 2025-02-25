@@ -4,5 +4,5 @@
 	let { children } = $props();
 </script>
 
-<Navbar links={[{name: "Home", href: "/"}, {name: "CTF", href: "/ctf"}, {name: "Exercises", href: "/ctf/exercises"}]} />
+<Navbar links={[{name: "What is CTF?", href: "/"}, {name: "Exercises", href: "/exercises"}]} />
 {@render children()}
