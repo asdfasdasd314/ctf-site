@@ -32,3 +32,8 @@ backend/zig-out
 .vscode
 backend/.vscode
 frontend/.vscode
+
+# Database
+backend/database.db
+backend/*.sqlite
+backend/*.sqlite3
