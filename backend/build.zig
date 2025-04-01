@@ -11,8 +11,16 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const httpz_module = b.dependency("httpz", .{ .target = target, .optimize = optimize }).module("httpz");
-    exe.root_module.addImport("httpz", httpz_module);
+    const httpz = b.dependency("httpz", .{ .target = target, .optimize = optimize });
+    exe.root_module.addImport("httpz", httpz.module("httpz"));
+
+    const sqlite = b.dependency("sqlite", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("sqlite", sqlite.module("sqlite"));
+
+    exe.addIncludePath(b.path("include"));
 
     b.installArtifact(exe);
 

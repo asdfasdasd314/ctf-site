@@ -1,10 +1,13 @@
 <script lang="ts">
-    import "../app.css";
+    import "../app.css"
+    import Home from "$lib/Home.svelte";
+
+    import flag from "$lib/assets/flag.png";
+
+    let textSize = 8;
 </script>
 
-<div id="body">
-    <h1>What is Capture the Flag?</h1>
-</div>
+<Home />
 
 <style>
 </style>

@@ -33,7 +33,7 @@ backend/zig-out
 backend/.vscode
 frontend/.vscode
 
-# Database
-backend/database.db
+# Database Files
+backend/*.db
 backend/*.sqlite
 backend/*.sqlite3

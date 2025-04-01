@@ -1,6 +1,9 @@
 const std = @import("std");
+const sqlite = @import("sqlite");
 const httpz = @import("httpz");
-const buff_override = @import("buffer_override.zig");
+const env_zig = @import("env.zig");
+const user_auth = @import("user_auth.zig");
+const App = @import("app.zig").App;
 const Allocator = std.mem.Allocator;
 
 const PORT = 8080;
@@ -9,24 +12,33 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
 
-    var server = try httpz.Server().init(allocator, .{
-        .port = PORT,
+    const env = env_zig.Env{ .env_path = "/Users/jameshollingsworth/Projects/ctf-site/backend/.env" };
+    const optn = try env.get_var(allocator, "DATABASE_PATH");
+    const path: [:0]const u8 = optn.?;
+    defer allocator.free(path);
+
+    var db = try sqlite.Db.init(.{
+        .mode = sqlite.Db.Mode{ .File = path },
+        .open_flags = .{
+            .write = true,
+            .create = true,
+        },
     });
 
-    defer server.deinit();
+    var app = App{
+        .allocator = &allocator,
+        .db = &db,
+    };
 
-    const router = server.router();
-    router.get("/", index);
-    router.get("/api/buffer-override/get-buffers", buff_override.get_buffers);
-    router.post("/api/buffer-override/set-buffer1", buff_override.set_buffer1);
-    router.put("/api/buffer-override/setup", buff_override.setup);
-    router.put("/api/buffer-override/exit", buff_override.exit);
-    std.debug.print("Server running at port {d}", .{PORT});
+    var server = try httpz.Server(*App).init(allocator, .{ .port = PORT }, &app);
+    var router = try server.router(.{});
+
+    router.post("/api/login", user_auth.login, .{});
+    router.get("/api/validate-session", user_auth.validateSession, .{});
+    router.post("/api/logout", user_auth.logout, .{});
+    router.post("/api/sign-up", user_auth.signup, .{});
+    router.post("/api/delete-account", user_auth.deleteAccount, .{});
+
+    std.debug.print("Listening on port {}\n", .{PORT});
     try server.listen();
-}
-
-fn index(_: *httpz.Request, res: *httpz.Response) !void {
-    res.body =
-        \\Hello World
-    ;
 }
