@@ -1,9 +1,15 @@
 const sqlite = @import("sqlite");
 const std = @import("std");
+const vuln_auth_exercise = @import("exercises/vulnerable_auth.zig");
 
 pub const App = struct {
     allocator: *const std.mem.Allocator,
-    db: *sqlite.Db,
+    main_db: *sqlite.Db,
+    vuln_auth_exercise: *vuln_auth_exercise.VulnerableAuth,
+
+    pub fn init(allocator: *const std.mem.Allocator, main_db: *sqlite.Db, vuln_auth: *vuln_auth_exercise.VulnerableAuth) App {
+        return App{ .allocator = allocator, .main_db = main_db, .vuln_auth_exercise = vuln_auth };
+    }
 
     pub fn checkPassword(self: *App, user_id: []const u8, pw: []const u8) !bool {
         const options: std.crypto.pwhash.argon2.VerifyOptions = .{ .allocator = self.allocator.* };
@@ -34,7 +40,7 @@ pub const App = struct {
             const temp_hex_id = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_id});
 
             // Check if this ID already exists
-            var stmt = try self.db.prepare("SELECT id FROM users WHERE id = ?");
+            var stmt = try self.main_db.prepare("SELECT id FROM users WHERE id = ?");
             defer stmt.deinit();
 
             const exists = try stmt.one(usize, .{}, .{ .id = temp_hex_id });
@@ -60,7 +66,7 @@ pub const App = struct {
             const temp_hex_id = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_id});
 
             // Check if this ID already exists
-            var stmt = try self.db.prepare("SELECT session_id FROM sessions WHERE session_id = ?");
+            var stmt = try self.main_db.prepare("SELECT session_id FROM sessions WHERE session_id = ?");
             defer stmt.deinit();
 
             const exists = try stmt.one(usize, .{}, .{ .session_id = temp_hex_id });
@@ -77,7 +83,7 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn retrievePasswordHashFromUserId(self: *App, user_id: []const u8) !?[]const u8 {
-        var stmt = try self.db.prepare("SELECT password FROM users WHERE id = ?");
+        var stmt = try self.main_db.prepare("SELECT password FROM users WHERE id = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
@@ -87,7 +93,7 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn retrieveUserIdFromUsers(self: *App, username: []const u8) !?[]const u8 {
-        var stmt = try self.db.prepare("SELECT id FROM users WHERE username = ?");
+        var stmt = try self.main_db.prepare("SELECT id FROM users WHERE username = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
@@ -97,7 +103,7 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn retrieveUserIdFromSessions(self: *App, session_id: []const u8) !?[]const u8 {
-        var stmt = try self.db.prepare("SELECT user_id FROM sessions WHERE session_id = ?");
+        var stmt = try self.main_db.prepare("SELECT user_id FROM sessions WHERE session_id = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
@@ -107,7 +113,7 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn retrieveSessionIdFromSessions(self: *App, user_id: []const u8) !?[]const u8 {
-        var stmt = try self.db.prepare("SELECT session_id FROM sessions WHERE user_id = ?");
+        var stmt = try self.main_db.prepare("SELECT session_id FROM sessions WHERE user_id = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
@@ -117,7 +123,7 @@ pub const App = struct {
 
     pub fn cleanupExpiredSessions(self: *App) !void {
         // Delete sessions that are older than 1 hour (3600 seconds)
-        var stmt = try self.db.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-1 hour')");
+        var stmt = try self.main_db.prepare("DELETE FROM sessions WHERE created_at < datetime('now', '-1 hour')");
         defer stmt.deinit();
 
         try stmt.exec(.{}, .{});

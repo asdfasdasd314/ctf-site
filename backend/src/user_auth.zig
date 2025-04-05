@@ -15,7 +15,7 @@ const SessionInfo = struct {
 fn createSession(app: *App, user_id: []const u8) ![]const u8 {
     const session_id = try app.generateSessionId();
 
-    var stmt = try app.db.prepare("INSERT INTO sessions (user_id, session_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+    var stmt = try app.main_db.prepare("INSERT INTO sessions (user_id, session_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
     defer stmt.deinit();
 
     try stmt.exec(.{}, .{ .user_id = user_id, .session_id = session_id });
@@ -76,7 +76,7 @@ pub fn signup(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     const new_id = try app.generateUserId();
     defer app.allocator.free(new_id);
 
-    var stmt = try app.db.prepare("INSERT INTO users (username, password, id) VALUES (?, ?, ?)");
+    var stmt = try app.main_db.prepare("INSERT INTO users (username, password, id) VALUES (?, ?, ?)");
     defer stmt.deinit();
 
     try stmt.exec(.{}, .{
@@ -101,7 +101,7 @@ pub fn validateSession(app: *App, req: *httpz.Request, res: *httpz.Response) !vo
         const user_id_opt = try app.retrieveUserIdFromSessions(session_id);
         if (user_id_opt) |user_id| {
             // Now grab the username from the database given our user_id
-            var stmt = try app.db.prepare("SELECT username FROM users WHERE id = ?");
+            var stmt = try app.main_db.prepare("SELECT username FROM users WHERE id = ?");
             defer stmt.deinit();
             const username = try stmt.oneAlloc([]const u8, app.allocator.*, .{}, .{ .id = user_id });
             if (username) |name| {
@@ -123,9 +123,11 @@ pub fn validateSession(app: *App, req: *httpz.Request, res: *httpz.Response) !vo
 }
 
 pub fn logout(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    // Actually I believe there is an issue because the session id is not cleared, so if the same session id was generated again
+    // It would be valid. Very unlikely, but still a bug
     const session_id_opt = req.cookies().get("session_id");
     if (session_id_opt) |session_id| {
-        var stmt = try app.db.prepare("DELETE FROM sessions WHERE session_id = ?");
+        var stmt = try app.main_db.prepare("DELETE FROM sessions WHERE session_id = ?");
         defer stmt.deinit();
         try stmt.exec(.{}, .{ .session_id = session_id });
     }
@@ -148,15 +150,14 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
 
             if (session) |session_id| {
                 defer app.allocator.free(session_id);
-                var stmt1 = try app.db.prepare("DELETE FROM sessions WHERE user_id = ? AND session_id = ?");
+                var stmt1 = try app.main_db.prepare("DELETE FROM sessions WHERE user_id = ? AND session_id = ?");
                 defer stmt1.deinit();
 
                 try stmt1.exec(.{}, .{
                     .user_id = id,
                     .session_id = session_id,
                 });
-            }
-            else {
+            } else {
                 // One of two things has happened: a bug in my code, or the account doesn't match the session
 
                 // Obtain user_id from session_id (in cookie) and check that it matches the user who is trying to delete their account
@@ -170,15 +171,13 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
                             try res.json(.{ .success = false }, .{});
                             return;
                         }
-                    }
-                    else {
+                    } else {
                         // This is a bug, call it a server error
                         res.status = 500;
                         try res.json(.{ .success = false }, .{});
                         return;
                     }
-                }
-                else {
+                } else {
                     // This is a bug, call it a server error
                     res.status = 500;
                     try res.json(.{ .success = false }, .{});
@@ -187,7 +186,7 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
             }
 
             // It's okay to only use the ID here because the username and password have already been checked
-            var stmt = try app.db.prepare("DELETE FROM users WHERE id = ?");
+            var stmt = try app.main_db.prepare("DELETE FROM users WHERE id = ?");
             defer stmt.deinit();
             try stmt.exec(.{}, .{
                 .id = id,
