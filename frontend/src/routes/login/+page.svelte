@@ -10,15 +10,19 @@
         }
     });
 
-    let validLogin = $state(true);
     let isLoading = $state(false);
-
+    let loginError = $state('');
     const handleSubmit = async (event: SubmitEvent) => {
         event.preventDefault();
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
         const username = formData.get('username') as string;
         const password = formData.get('password') as string;
+
+        if (!username || !password) {
+            loginError = "Please enter both username and password";
+            return;
+        }
 
         isLoading = true;
         const res = await fetch("/api/login", {
@@ -29,19 +33,14 @@
             body: JSON.stringify({ username, password })
         });
 
-        if (res.status === 200) {
-            if (await auth.checkAuth()) {
-                await goto("/dashboard");
-            }
-            else {
-                console.error("error");
-            }
+        if (res.status === 200 && await auth.checkAuth()) {
+            await goto("/dashboard");
         }
         else if (res.status === 401) {
-            validLogin = false;
+            loginError = "Invalid username or password";
         }
         else {
-            console.error("error");
+            loginError = "Error trying to login, maybe try again? If this keeps happening, please contact support.";
         }
         isLoading = false;
     }
@@ -99,9 +98,9 @@
                     </div>
 
                     <!-- Error Message -->
-                    {#if !validLogin}
+                    {#if loginError}
                         <div class="bg-red-50 dark:bg-red-900/50 text-red-700 dark:text-red-200 p-4 rounded-lg text-sm">
-                            Invalid username or password
+                            {loginError}
                         </div>
                     {/if}
 

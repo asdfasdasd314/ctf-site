@@ -2,10 +2,10 @@
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
     
-    let username = '';
-    let password = '';
-    let error = '';
-    let isLoading = true;
+    let username = $state('');
+    let password = $state('');
+    let error = $state('');
+    let isLoading = $state(true);
     
     onMount(async () => {
         // Check for user_id cookie
@@ -57,7 +57,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-white">Vulnerable Auth Dashboard</h1>
             <button 
-                on:click={signOut}
+                onclick={signOut}
                 class="px-4 py-2 bg-emerald-700 text-white rounded hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-emerald-800"
             >
                 Sign Out

@@ -1,9 +1,12 @@
 # TODO
 - **CLEANUP**
-    - No stateful usernames or password
     - Remove redundant code
     - What do I need on the page?
     - Bad naming and URLs
+- Communication protocol between client and server
+    - Error codes, success codes
+    - Returned data
+    - Documentation
 - User dashboard
 - For Vulnerable Auth challenge, users expire after 20 minutes (except for the ones I put in at the start)
 - Backend logic for completing challenges

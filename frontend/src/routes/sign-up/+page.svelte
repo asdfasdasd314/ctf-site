@@ -1,7 +1,6 @@
 <script lang="ts">
     import * as auth from "$lib/userAuth";
     import { goto } from "$app/navigation";
-    import { get } from 'svelte/store';
     import { onMount } from 'svelte';
     import { fly, fade } from 'svelte/transition';
 
@@ -12,7 +11,7 @@
     });
 
     let isLoading = $state(false);
-    let usernameIsTaken = $state(false);
+    let signupError = $state('');
 
     const handleSubmit = async (event: SubmitEvent) => {
         event.preventDefault();
@@ -20,6 +19,11 @@
         const formData = new FormData(form);
         const username = formData.get('username') as string;
         const password = formData.get('password') as string;
+
+        if (!username || !password) {
+            signupError = "Please enter both username and password";
+            return;
+        }
 
         isLoading = true;
         const res = await fetch("/api/sign-up", {
@@ -32,10 +36,13 @@
 
         if (res.status === 200) {
             await goto('/dashboard');
-        } else if (res.status === 400) {
-            usernameIsTaken = true;
-        } else {
-            console.error("error");
+            signupError = '';
+        }
+        else if (res.status === 401) {
+            signupError = "Username has already been taken";
+        }
+        else {
+            signupError = 'Error trying to sign up, maybe try again? If this keeps happening, please contact support.';
         }
         isLoading = false;
     }
@@ -48,7 +55,7 @@
             <div in:fly={{ y: -20, duration: 800 }}>
                 <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Create Account</h1>
                 <p class="text-emerald-100 text-lg md:text-xl max-w-2xl">
-                    Join our community of cybersecurity enthusiasts and start solving challenges today.
+                    Begin your journey in mastering cybersecurity and start solving challenges today.
                 </p>
             </div>
         </div>
@@ -93,9 +100,9 @@
                     </div>
 
                     <!-- Error Message -->
-                    {#if usernameIsTaken}
+                    {#if signupError}
                         <div class="bg-red-50 dark:bg-red-900/50 text-red-700 dark:text-red-200 p-4 rounded-lg text-sm">
-                            {"Username has already been taken"}
+                            {signupError}
                         </div>
                     {/if}
 

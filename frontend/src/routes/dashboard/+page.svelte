@@ -32,6 +32,7 @@
         });
 
         if (res.status === 200) {
+            // As we will redirect, we don't have to reset the validationError
             auth.loggedIn.set(false);
             enteringData = false;
             await goto('/login');
@@ -40,7 +41,7 @@
             validationError = "Invalid username or password";
         }
         else {
-            console.error("error");
+            validationError = "Error trying to delete account, maybe try again? If this keeps happening, please contact support.";
         }
         isLoading = false;
     }

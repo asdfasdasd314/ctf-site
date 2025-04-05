@@ -1,10 +1,11 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     
-    let error = '';
-    let isLoading = false;
+    let error = $state('');
+    let isLoading = $state(false);
     
     async function handleLogin(event: Event) {
+        event.preventDefault();
         const form = event.target as HTMLFormElement;
         const formData = new FormData(form);
         const username = formData.get('username') as string;
@@ -54,7 +55,7 @@
                 Sign in to your account
             </h2>
         </div>
-        <form class="mt-8 space-y-6" on:submit|preventDefault={handleLogin}>
+        <form class="mt-8 space-y-6" onsubmit={handleLogin}>
             <div class="rounded-md shadow-sm -space-y-px">
                 <div>
                     <label for="username" class="sr-only">Username</label>
