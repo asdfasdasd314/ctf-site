@@ -1,35 +1,40 @@
 <script lang="ts">
-    import "../app.css";
-    import * as auth from '$lib/userAuth';
+	import '../app.css';
+	import * as auth from '$lib/userAuth';
 
-    let leftLinks = [{ name: "Home", href: "/" }, { name: "Exercises", href: "/exercises" }];
-    let rightLinks: { name: string, href: string }[] = $state([]);
+	let leftLinks = [
+		{ name: 'Home', href: '/' },
+		{ name: 'Exercises', href: '/exercises' }
+	];
+	let rightLinks: { name: string; href: string }[] = $state([]);
 
-    auth.loggedIn.subscribe((loggedIn) => {
-        if (loggedIn) {
-            rightLinks = [{ name: "Dashboard", href: "/dashboard" }];
-        }
-        else {
-            rightLinks = [{ name: "Login", href: "/login" }, { name: "Sign Up", href: "/sign-up" }];
-        }
-    });
+	auth.loggedIn.subscribe((loggedIn) => {
+		if (loggedIn) {
+			rightLinks = [{ name: 'Dashboard', href: '/dashboard' }];
+		} else {
+			rightLinks = [
+				{ name: 'Login', href: '/login' },
+				{ name: 'Sign Up', href: '/sign-up' }
+			];
+		}
+	});
 </script>
 
 <div class="mb-14">
-    <div id="navbar" class="flex flex-row fixed top-0 left-0 z-50 w-full shadow-md bg-slate-800">
-        <div class="flex flex-row mr-auto">
-            {#each leftLinks as link}
-                <a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
-            {/each}
-        </div>
-        <div class="flex flex-row ml-auto">
-            {#each rightLinks as link}
-                <a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
-            {/each}
-        </div>
-    </div>
+	<div id="navbar" class="flex flex-row fixed top-0 left-0 z-50 w-full shadow-md bg-slate-800">
+		<div class="flex flex-row mr-auto">
+			{#each leftLinks as link}
+				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
+			{/each}
+		</div>
+		<div class="flex flex-row ml-auto">
+			{#each rightLinks as link}
+				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
+			{/each}
+		</div>
+	</div>
 </div>
 
 <style>
-    
 </style>
+

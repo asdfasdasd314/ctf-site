@@ -31,7 +31,7 @@ pub const VulnerableAuth = struct {
     }
 
     /// On the caller to free the memory
-    pub fn retrieveUser(self: *VulnerableAuth, user_id: u32) !?UserInfo {   
+    pub fn retrieveUser(self: *VulnerableAuth, user_id: u32) !?UserInfo {
         var stmt = try self.vuln_auth_db.prepare("SELECT username, password FROM users WHERE id = ?");
         defer stmt.deinit();
 
@@ -39,7 +39,6 @@ pub const VulnerableAuth = struct {
         return user_info;
     }
 };
-
 
 pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     const json = try req.json(UserInfo);
