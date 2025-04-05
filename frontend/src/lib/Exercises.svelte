@@ -50,7 +50,7 @@
 			<div in:fly={{ y: -20, duration: 800 }}>
 				<h1 class="text-4xl md:text-5xl font-bold text-white mb-4">CTF Challenges</h1>
 				<p class="text-emerald-100 text-lg md:text-xl max-w-2xl">
-					Test your skills with our vulnerable authentication challenge.
+					Improve your skills in cybersecurity by solving challenges.
 				</p>
 			</div>
 		</div>

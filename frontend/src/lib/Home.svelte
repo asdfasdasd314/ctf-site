@@ -322,7 +322,7 @@
 		<div class="container mx-auto px-4 text-center">
 			<h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Test Your Skills?</h2>
 			<p class="max-w-2xl mx-auto mb-8 text-lg opacity-90">
-				Join our community of cybersecurity enthusiasts and start solving challenges today.
+				Begin your journey in mastering cybersecurity and start solving challenges today.
 			</p>
 			<a
 				href="#exercises"

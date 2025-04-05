@@ -7,6 +7,7 @@
     - Error codes, success codes
     - Returned data
     - Documentation
+- Retrieve exercise data from the server onMount
 - User dashboard
 - For Vulnerable Auth challenge, users expire after 20 minutes (except for the ones I put in at the start)
 - Backend logic for completing challenges
