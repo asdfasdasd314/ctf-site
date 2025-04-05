@@ -37,3 +37,4 @@ frontend/.vscode
 backend/*.db
 backend/*.sqlite
 backend/*.sqlite3
+backend/db/migrations

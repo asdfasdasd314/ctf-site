@@ -1,12 +1,15 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     
-    let username = '';
-    let password = '';
     let error = '';
     let isLoading = false;
     
-    async function handleLogin() {
+    async function handleLogin(event: Event) {
+        const form = event.target as HTMLFormElement;
+        const formData = new FormData(form);
+        const username = formData.get('username') as string;
+        const password = formData.get('password') as string;
+        
         if (!username || !password) {
             error = 'Please enter both username and password';
             return;
@@ -60,7 +63,6 @@
                         name="username"
                         type="text"
                         required
-                        bind:value={username}
                         class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
                         placeholder="Username"
                     />
@@ -72,7 +74,6 @@
                         name="password"
                         type="password"
                         required
-                        bind:value={password}
                         class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
                         placeholder="Password"
                     />
