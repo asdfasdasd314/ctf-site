@@ -4,7 +4,7 @@
 	let error = $state('');
 	let isLoading = $state(false);
 
-	async function handleLogin(event: Event) {
+	async function handleSignup(event: Event) {
 		event.preventDefault();
 		const form = event.target as HTMLFormElement;
 		const formData = new FormData(form);
@@ -20,7 +20,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('/api/exercises/vulnerable-auth/vulnerable-login', {
+			const response = await fetch('/api/exercises/1/vulnerable-signup', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -28,19 +28,23 @@
 				body: JSON.stringify({ username, password })
 			});
 
-			if (response.status === 200) {
-				const data = await response.json();
+			const data = await response.json();
+
+			if (data.success) {
 				if (data.user_id) {
 					// Set cookie with user_id
 					document.cookie = `vulnerable_auth_user_id=${data.user_id}; path=/`;
-					goto('/exercises/vulnerable-auth');
+					goto('/exercises/1');
 				}
+			} else if (data.err) {
+				error = data.err;
 			} else {
-				error = 'Invalid username or password';
+				error = 'An error occurred. Please try again.';
+				console.error('Signup error:', response);
 			}
 		} catch (err) {
 			error = 'An error occurred. Please try again.';
-			console.error('Login error:', err);
+			console.error('Signup error:', err);
 		} finally {
 			isLoading = false;
 		}
@@ -50,11 +54,9 @@
 <div class="min-h-screen bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
 	<div class="max-w-md w-full space-y-8">
 		<div>
-			<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-				Sign in to your account
-			</h2>
+			<h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
 		</div>
-		<form class="mt-8 space-y-6" onsubmit={handleLogin}>
+		<form class="mt-8 space-y-6" onsubmit={handleSignup}>
 			<div class="rounded-md shadow-sm -space-y-px">
 				<div>
 					<label for="username" class="sr-only">Username</label>
@@ -112,14 +114,14 @@
 							></path>
 						</svg>
 					{/if}
-					Sign in
+					Sign up
 				</button>
 			</div>
 		</form>
 
 		<div class="text-center">
-			<a href="/exercises/vulnerable-auth/signup" class="text-emerald-600 hover:text-emerald-500">
-				Don't have an account? Sign up
+			<a href="/exercises/1/login" class="text-emerald-600 hover:text-emerald-500">
+				Already have an account? Sign in
 			</a>
 		</div>
 	</div>

@@ -5,9 +5,15 @@ const env_zig = @import("env.zig");
 const user_auth = @import("user_auth.zig");
 const App = @import("app.zig").App;
 const vuln_auth_exercise = @import("exercises/vulnerable_auth.zig");
-
+const exercise = @import("exercises/exercise.zig");
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer {
+        const result = gpa.deinit();
+        if (result == .leak) {
+            std.log.warn("Memory leaks detected\n", .{});
+        }
+    }
     const allocator = gpa.allocator();
 
     const env = env_zig.Env{ .env_path = "/Users/jameshollingsworth/Projects/ctf-site/backend/.env" };
@@ -50,6 +56,10 @@ pub fn main() !void {
     router.post("/api/logout", user_auth.logout, .{});
     router.post("/api/sign-up", user_auth.signup, .{});
     router.post("/api/delete-account", user_auth.deleteAccount, .{});
+
+    // Exercises
+    router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
+    router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
 
     // Vulnerable User Authentication Exercise
     router.post("/api/exercises/1/vulnerable-login", vuln_auth_exercise.vulnerableLogin, .{});

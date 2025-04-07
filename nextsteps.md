@@ -1,12 +1,4 @@
 # TODO
-- **CLEANUP**
-    - Remove redundant code
-    - What do I need on the page?
-    - Bad naming and URLs
-- Communication protocol between client and server
-    - Error codes, success codes
-    - Returned data
-    - Documentation
 - Retrieve exercise data from the server onMount
 - User dashboard
 - For Vulnerable Auth challenge, users expire after 20 minutes (except for the ones I put in at the start)

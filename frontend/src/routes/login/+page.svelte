@@ -33,10 +33,12 @@
 			body: JSON.stringify({ username, password })
 		});
 
-		if (res.status === 200 && (await auth.checkAuth())) {
+		const data = await res.json();
+
+		if (data.success && (await auth.checkAuth())) {
 			await goto('/dashboard');
-		} else if (res.status === 401) {
-			loginError = 'Invalid username or password';
+		} else if (data.err) {
+			loginError = data.err;
 		} else {
 			loginError =
 				'Error trying to login, maybe try again? If this keeps happening, please contact support.';

@@ -15,14 +15,14 @@
 		);
 
 		if (!userCookie) {
-			goto('/exercises/vulnerable-auth/login');
+			goto('/exercises/1/login');
 			return;
 		}
 
 		const user_id = userCookie.split('=')[1];
 
 		try {
-			const response = await fetch('/api/exercises/vulnerable-auth/vulnerable-retrieve-user-data', {
+			const response = await fetch('/api/exercises/1/vulnerable-retrieve-user-data', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -30,9 +30,9 @@
 				body: JSON.stringify(user_id)
 			});
 
-			if (response.status === 200) {
-				const data = await response.json();
+			const data = await response.json();
 
+			if (data.success) {
 				username = data.username;
 				password = data.password;
 			} else {
@@ -49,7 +49,7 @@
 	function signOut() {
 		// Clear the cookie by setting it to expire in the past
 		document.cookie = 'vulnerable_auth_user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-		goto('/exercises/vulnerable-auth/login');
+		goto('/exercises/1/login');
 	}
 </script>
 

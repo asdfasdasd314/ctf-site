@@ -1,6 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	// import Navbar from '$lib/Navbar.svelte';
+	import Navbar from '$lib/Navbar.svelte';
 	import * as auth from '$lib/userAuth';
 	import { onMount } from 'svelte';
 	// import { page } from '$app/stores';
@@ -15,6 +15,8 @@
 <!-- {#if !$page.url.pathname.startsWith('/exercises')}
 	<Navbar />
 {/if} -->
+
+<Navbar />
 
 {@render children()}
 

@@ -31,13 +31,15 @@
 			body: JSON.stringify({ username, password })
 		});
 
-		if (res.status === 200) {
+		const data = await res.json();
+
+		if (data.success) {
 			// As we will redirect, we don't have to reset the validationError
 			auth.loggedIn.set(false);
 			enteringData = false;
 			await goto('/login');
-		} else if (res.status === 401) {
-			validationError = 'Invalid username or password';
+		} else if (data.err) {
+			validationError = data.err;
 		} else {
 			validationError =
 				'Error trying to delete account, maybe try again? If this keeps happening, please contact support.';
@@ -55,7 +57,9 @@
 			}
 		});
 
-		if (res.status === 200) {
+		const data = await res.json();
+
+		if (data.success) {
 			auth.loggedIn.set(false);
 			await goto('/login');
 		}

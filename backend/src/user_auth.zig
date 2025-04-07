@@ -4,12 +4,12 @@ const App = @import("app.zig").App;
 const createSession = @import("app.zig").createSession;
 const createUser = @import("app.zig").createUser;
 
-const UserInfo = struct {
+pub const UserInfo = struct {
     username: []const u8,
     password: []const u8,
 };
 
-const SessionInfo = struct {
+pub const SessionInfo = struct {
     session_id: []const u8,
 };
 
@@ -28,13 +28,13 @@ pub fn login(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
             const session_id = try createSession(app, id);
             defer app.allocator.free(session_id);
 
-            res.status = 200;
             try res.setCookie("session_id", session_id, .{ .max_age = 3600, .path = "/", .secure = true, .same_site = .strict, .http_only = true });
+            try res.json(.{ .success = true }, .{});
         } else {
-            res.status = 401;
+            try res.json(.{ .success = false, .err = "Invalid username or password" }, .{});
         }
     } else {
-        res.status = 401;
+        try res.json(.{ .success = false, .err = "Invalid username or password" }, .{});
     }
 }
 
@@ -50,7 +50,7 @@ pub fn signup(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     if (user_id) |id| {
         // If this code runs, then the username is already taken
         app.allocator.free(id);
-        res.status = 400;
+        try res.json(.{ .success = false, .err = "Username has already been taken" }, .{});
         return;
     }
 
@@ -60,8 +60,8 @@ pub fn signup(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     const session_id = try createSession(app, new_id);
     defer app.allocator.free(session_id);
 
-    res.status = 200;
     try res.setCookie("session_id", session_id, .{ .max_age = 3600, .path = "/", .secure = true, .same_site = .strict, .http_only = true });
+    try res.json(.{ .success = true }, .{});
 }
 
 pub fn validateSession(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
@@ -78,19 +78,15 @@ pub fn validateSession(app: *App, req: *httpz.Request, res: *httpz.Response) !vo
             const username = try stmt.oneAlloc([]const u8, app.allocator.*, .{}, .{ .user_id = user_id });
             if (username) |name| {
                 defer app.allocator.free(name);
-                res.status = 200;
-                try res.json(name, .{});
+                try res.json(.{ .success = true, .username = name }, .{});
             } else {
-                res.status = 401;
-                try res.json("Session is invalid", .{});
+                try res.json(.{ .success = false, .err = "Session is invalid" }, .{});
             }
         } else {
-            res.status = 401;
-            try res.json("Session is invalid", .{});
+            try res.json(.{ .success = false, .err = "Session is invalid" }, .{});
         }
     } else {
-        res.status = 401;
-        try res.json("Session is invalid", .{});
+        try res.json(.{ .success = false, .err = "Session is invalid" }, .{});
     }
 }
 
@@ -105,7 +101,7 @@ pub fn logout(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
         try stmt.exec(.{}, .{ .session_id = session_id });
     }
 
-    res.status = 200;
+    try res.json(.{ .success = true }, .{});
 }
 
 pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
@@ -117,7 +113,6 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
 
     const user_id = try app.retrieveUserIdFromUsername(username);
     if (user_id) |id| {
-        defer app.allocator.free(id);
         if (try app.checkPassword(id, password)) {
             const session = try app.retrieveSessionIdFromUserId(id);
 
@@ -140,15 +135,13 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
                     if (user_id_from_session) |user_id_from_session_id| {
                         defer app.allocator.free(user_id_from_session_id);
                         if (!std.mem.eql(u8, user_id_from_session_id, id)) {
-                            res.status = 401;
-                            try res.json(.{ .success = false }, .{});
+                            try res.json(.{ .success = false, .err = "Session is invalid" }, .{});
                             return;
                         }
                     }
                 }
                 // This is a bug, call it a server error
-                res.status = 500;
-                try res.json(.{ .success = false }, .{});
+                try res.json(.{ .success = false, .err = "Server error" }, .{});
                 return;
             }
 
@@ -158,9 +151,13 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
             try stmt.exec(.{}, .{
                 .user_id = id,
             });
-            res.status = 200;
         }
     }
 
-    try res.json(.{ .success = user_id != null }, .{});
+    if (user_id) |id| {
+        defer app.allocator.free(id);
+        try res.json(.{ .success = true }, .{});
+    } else {
+        try res.json(.{ .success = false, .err = "Invalid username or password" }, .{});
+    }
 }

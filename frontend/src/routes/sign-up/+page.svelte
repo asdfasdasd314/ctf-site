@@ -34,11 +34,13 @@
 			body: JSON.stringify({ username, password })
 		});
 
-		if (res.status === 200) {
+		const data = await res.json();
+
+		if (data.success && (await auth.checkAuth())) {
 			await goto('/dashboard');
 			signupError = '';
-		} else if (res.status === 401) {
-			signupError = 'Username has already been taken';
+		} else if (data.err) {
+			signupError = data.err;
 		} else {
 			signupError =
 				'Error trying to sign up, maybe try again? If this keeps happening, please contact support.';

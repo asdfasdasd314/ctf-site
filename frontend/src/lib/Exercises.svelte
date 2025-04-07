@@ -35,7 +35,7 @@
 		isCompleted: false,
 		tags: ['authentication', 'web-security', 'vulnerability'],
 		createdAt: '2025-04-04',
-		link: '/exercises/vulnerable-auth'
+		link: '/exercises/1'
 	};
 
 	onMount(() => {
