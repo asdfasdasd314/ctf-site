@@ -40,10 +40,10 @@ pub const App = struct {
             const temp_hex_id = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_id});
 
             // Check if this ID already exists
-            var stmt = try self.main_db.prepare("SELECT id FROM users WHERE id = ?");
+            var stmt = try self.main_db.prepare("SELECT user_id FROM users WHERE user_id = ?");
             defer stmt.deinit();
 
-            const exists = try stmt.one(usize, .{}, .{ .id = temp_hex_id });
+            const exists = try stmt.one(usize, .{}, .{ .user_id = temp_hex_id });
 
             // If ID doesn't exist, we can use it
             if (exists == null) {
@@ -83,17 +83,17 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn retrievePasswordHashFromUserId(self: *App, user_id: []const u8) !?[]const u8 {
-        var stmt = try self.main_db.prepare("SELECT password FROM users WHERE id = ?");
+        var stmt = try self.main_db.prepare("SELECT password FROM users WHERE user_id = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
-            .id = user_id,
+            .user_id = user_id,
         });
     }
 
     /// On the caller to free the memory
-    pub fn retrieveUserIdFromUsers(self: *App, username: []const u8) !?[]const u8 {
-        var stmt = try self.main_db.prepare("SELECT id FROM users WHERE username = ?");
+    pub fn retrieveUserIdFromUsername(self: *App, username: []const u8) !?[]const u8 {
+        var stmt = try self.main_db.prepare("SELECT user_id FROM users WHERE username = ?");
         defer stmt.deinit();
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{
@@ -102,7 +102,7 @@ pub const App = struct {
     }
 
     /// On the caller to free the memory
-    pub fn retrieveUserIdFromSessions(self: *App, session_id: []const u8) !?[]const u8 {
+    pub fn retrieveUserIdFromSessionId(self: *App, session_id: []const u8) !?[]const u8 {
         var stmt = try self.main_db.prepare("SELECT user_id FROM sessions WHERE session_id = ?");
         defer stmt.deinit();
 
@@ -112,7 +112,7 @@ pub const App = struct {
     }
 
     /// On the caller to free the memory
-    pub fn retrieveSessionIdFromSessions(self: *App, user_id: []const u8) !?[]const u8 {
+    pub fn retrieveSessionIdFromUserId(self: *App, user_id: []const u8) !?[]const u8 {
         var stmt = try self.main_db.prepare("SELECT session_id FROM sessions WHERE user_id = ?");
         defer stmt.deinit();
 
@@ -129,3 +129,36 @@ pub const App = struct {
         try stmt.exec(.{}, .{});
     }
 };
+
+/// On the caller to free the memory
+pub fn createSession(app: *App, user_id: []const u8) ![]const u8 {
+    const session_id = try app.generateSessionId();
+
+    var stmt = try app.main_db.prepare("INSERT INTO sessions (user_id, session_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
+    defer stmt.deinit();
+
+    try stmt.exec(.{}, .{ .user_id = user_id, .session_id = session_id });
+
+    // Return a new allocation that the caller owns
+    return session_id;
+}
+
+/// On the caller to free the memory
+pub fn createUser(app: *App, username: []const u8, password: []const u8) ![]const u8 {
+    const hash: []u8 = try app.allocator.alloc(u8, 116); // I'm not quite certain how this can be changed, but the hash generated is 116 bytes
+    defer app.allocator.free(hash);
+
+    const params: std.crypto.pwhash.argon2.Params = .{ .t = 2, .m = 1000, .p = 1 };
+    const options: std.crypto.pwhash.argon2.HashOptions = .{ .allocator = app.allocator.*, .encoding = .phc, .mode = .argon2i, .params = params };
+
+    _ = try std.crypto.pwhash.argon2.strHash(password, options, hash);
+
+    const user_id = try app.generateUserId();
+
+    var stmt = try app.main_db.prepare("INSERT INTO users (username, password, user_id) VALUES (?, ?, ?)");
+    defer stmt.deinit();
+
+    try stmt.exec(.{}, .{ .username = username, .password = hash, .user_id = user_id });
+
+    return user_id;
+}

@@ -31,7 +31,7 @@ pub const VulnerableAuth = struct {
     }
 
     /// On the caller to free the memory
-    pub fn retrieveUser(self: *VulnerableAuth, user_id: u32) !?UserInfo {   
+    pub fn retrieveUser(self: *VulnerableAuth, user_id: u32) !?UserInfo {
         var stmt = try self.vuln_auth_db.prepare("SELECT username, password FROM users WHERE id = ?");
         defer stmt.deinit();
 
@@ -40,7 +40,6 @@ pub const VulnerableAuth = struct {
     }
 };
 
-
 pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     const json = try req.json(UserInfo);
     const username = json.?.username;
@@ -48,11 +47,9 @@ pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !vo
 
     const id_opt = try app.vuln_auth_exercise.retrieveUserId(username, password);
     if (id_opt) |id| {
-        res.status = 200;
-        try res.json(.{ .user_id = id }, .{});
+        try res.json(.{ .success = true, .user_id = id }, .{});
     } else {
-        res.status = 401;
-        try res.json(.{ .user_id = null }, .{});
+        try res.json(.{ .success = false, .user_id = null, .err = "Invalid username or password" }, .{});
     }
 }
 
@@ -65,11 +62,9 @@ pub fn vulnerableSignup(app: *App, req: *httpz.Request, res: *httpz.Response) !v
 
     const id_opt = try app.vuln_auth_exercise.retrieveUserId(username, password);
     if (id_opt) |id| {
-        res.status = 200;
-        try res.json(.{ .user_id = id }, .{});
+        try res.json(.{ .success = true, .user_id = id }, .{});
     } else {
-        res.status = 401;
-        try res.json(.{ .user_id = null }, .{});
+        try res.json(.{ .success = false, .user_id = null, .err = "Failed to create user" }, .{});
     }
 }
 
@@ -79,10 +74,8 @@ pub fn vulnerableRetrieveUserData(app: *App, req: *httpz.Request, res: *httpz.Re
 
     const user_opt = try app.vuln_auth_exercise.retrieveUser(user_id);
     if (user_opt) |user| {
-        res.status = 200;
-        try res.json(.{ .username = user.username, .password = user.password }, .{});
+        try res.json(.{ .success = true, .username = user.username, .password = user.password }, .{});
     } else {
-        res.status = 401;
-        try res.json(.{ .username = null, .password = null }, .{});
+        try res.json(.{ .success = false, .username = null, .password = null, .err = "Invalid user ID" }, .{});
     }
 }

@@ -10,14 +10,15 @@ export async function checkAuth(): Promise<boolean> {
             headers: { 'Content-Type': 'application/json' },
         });
 
-        if (res.status === 200) {
+        const data = await res.json();
+        if (data.success) {
             loggedIn.set(true);
         }
         else {
             loggedIn.set(false);
         }
 
-        return res.status === 200;
+        return data.success;
     } catch (err) {
         loggedIn.set(false);
         console.error('Session check failed:', err);

@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { fly, fade, scale } from 'svelte/transition';
 
-    import objdump from "$lib/assets/objdump.png";
+	import objdump from '$lib/assets/objdump.png';
 
 	// For the scrolling exercises bar
 	let exercisesContainer: HTMLElement;
@@ -27,15 +27,17 @@
 		{
 			name: 'Pico CTF',
 			url: 'https://picoctf.org',
-			description: 'This was the main resource I used because they offer fun and challenging exercises!'
+			description:
+				'This was the main resource I used because they offer fun and challenging exercises!'
 		},
 		{
 			name: 'Pwnable',
 			url: 'https://www.pwnable.tw/',
-			description: 'Some weird stuff happens with this site... but it\'s great for binary exploitation'
+			description:
+				"Some weird stuff happens with this site... but it's great for binary exploitation"
 		},
 
-        // These two were by v0
+		// These two were by v0
 		{
 			name: 'TryHackMe',
 			url: 'https://tryhackme.com/',
@@ -114,11 +116,7 @@
 				<div class="md:w-1/2 relative" in:fade={{ delay: 300, duration: 1000 }}>
 					<div class="relative w-full h-64 md:h-96">
 						<div class="absolute inset-0 flex justify-center items-start">
-							<img
-								src={objdump}
-								alt="Terminal"
-								class="object-contain h-full"
-							/>
+							<img src={objdump} alt="Terminal" class="object-contain h-full" />
 						</div>
 					</div>
 				</div>
@@ -324,7 +322,7 @@
 		<div class="container mx-auto px-4 text-center">
 			<h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Test Your Skills?</h2>
 			<p class="max-w-2xl mx-auto mb-8 text-lg opacity-90">
-				Join our community of cybersecurity enthusiasts and start solving challenges today.
+				Begin your journey in mastering cybersecurity and start solving challenges today.
 			</p>
 			<a
 				href="#exercises"
@@ -347,4 +345,3 @@
 		display: none; /* Chrome, Safari and Opera */
 	}
 </style>
-
