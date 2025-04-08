@@ -36,6 +36,9 @@
 					document.cookie = `vulnerable_auth_user_id=${data.user_id}; path=/`;
 					goto('/exercises/1/dashboard');
 				}
+			}
+			else if (data.username_taken) {
+				error = 'Username has already been taken.';
 			} else if (data.err) {
 				error = data.err;
 			} else {

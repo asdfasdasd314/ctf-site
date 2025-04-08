@@ -66,6 +66,18 @@ pub fn vulnerableSignup(app: *App, req: *httpz.Request, res: *httpz.Response) !v
     const username = json.?.username;
     const password = json.?.password;
 
+    // Check if username is already taken
+    var stmt = try app.vuln_auth_exercise.vuln_auth_db.prepare("SELECT id FROM users WHERE username = ?");
+    defer stmt.deinit();
+
+    const existing_id = try stmt.one(u32, .{}, .{ .username = username });
+
+    if (existing_id) |_| {
+        try res.json(.{ .success = false, .username_taken = true }, .{});
+        return;
+    }
+
+    // Otherwise go ahead
     try app.vuln_auth_exercise.createUser(username, password);
 
     const id_opt = try app.vuln_auth_exercise.retrieveUserId(username, password);
