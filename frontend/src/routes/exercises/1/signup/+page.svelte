@@ -34,7 +34,7 @@
 				if (data.user_id) {
 					// Set cookie with user_id
 					document.cookie = `vulnerable_auth_user_id=${data.user_id}; path=/`;
-					goto('/exercises/1');
+					goto('/exercises/1/dashboard');
 				}
 			} else if (data.err) {
 				error = data.err;

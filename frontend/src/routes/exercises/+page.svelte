@@ -2,7 +2,7 @@
 	import Exercises from '$lib/Exercises.svelte';
 </script>
 
-<Exercises />
+<Exercises  />
 
 <style>
 </style>

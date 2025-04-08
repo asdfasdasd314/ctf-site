@@ -25,9 +25,13 @@ pub const ExposedExercise = struct {
     }
 };
 
-const SolvedExercise = struct {
+const ExerciseFlag = struct {
     exercise_id: i32,
     flag: []const u8,
+};
+
+const ExerciseID = struct {
+    exercise_id: i32,
 };
 
 pub fn retrieveAllExerciseData(app: *App, _: *httpz.Request, res: *httpz.Response) !void {
@@ -54,7 +58,7 @@ pub fn retrieveAllExerciseData(app: *App, _: *httpz.Request, res: *httpz.Respons
         app.allocator.free(exercises);
     }
 
-    try res.json(exercises, .{});
+    try res.json(.{ .success = true, .exercises = exercises }, .{});
 }
 
 pub fn validateFlag(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
@@ -64,12 +68,12 @@ pub fn validateFlag(app: *App, req: *httpz.Request, res: *httpz.Response) !void 
         if (user_id_opt) |user_id| {
             defer app.allocator.free(user_id);
             const body = req.body().?;
-            const json = try std.json.parseFromSlice(SolvedExercise, app.allocator.*, body, .{});
+            const json = try std.json.parseFromSlice(ExerciseFlag, app.allocator.*, body, .{});
             defer json.deinit();
             const exercise_id = json.value.exercise_id;
             const flag = json.value.flag;
 
-            const flag_stmt = try app.main_db.prepare(
+            var flag_stmt = try app.main_db.prepare(
                 \\ SELECT
                 \\     flag
                 \\ FROM exercises
@@ -79,17 +83,25 @@ pub fn validateFlag(app: *App, req: *httpz.Request, res: *httpz.Response) !void 
 
             const flag_opt = try flag_stmt.oneAlloc([]const u8, app.allocator.*, .{}, .{exercise_id});
             if (flag_opt) |true_flag| {
-                defer app.allocator.free(flag);
+                defer app.allocator.free(true_flag);
 
                 if (std.mem.eql(u8, flag, true_flag)) {
                     // Add to completions
-                    const completion_stmt = try app.main_db.prepare(
+                    var completion_stmt = try app.main_db.prepare(
                         \\ INSERT INTO completions (user_id, exercise_id)
                         \\ VALUES (?, ?)
                     );
                     defer completion_stmt.deinit();
-
                     try completion_stmt.exec(.{}, .{user_id, exercise_id});
+
+                    // Increment number of times exercise has been solved
+                    var increment_count_stmt = try app.main_db.prepare(
+                        \\ UPDATE exercises
+                        \\ SET solve_count = solve_count + 1
+                        \\ WHERE exercise_id = ?
+                    );
+                    defer increment_count_stmt.deinit();
+                    try increment_count_stmt.exec(.{}, .{exercise_id});
 
                     try res.json(.{ .success = true }, .{});
                 } else {
@@ -105,4 +117,36 @@ pub fn validateFlag(app: *App, req: *httpz.Request, res: *httpz.Response) !void 
         try res.json(.{ .success = false, .err = "Not logged in" }, .{});
         return;
     }
+}
+
+pub fn checkSolved(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    const session_id_opt = req.cookies().get("session_id");
+    if (session_id_opt) |session_id| {
+        const user_id_opt = try app.retrieveUserIdFromSessionId(session_id);
+        if (user_id_opt) |user_id| {
+            defer app.allocator.free(user_id);
+            const json = try std.json.parseFromSlice(ExerciseID, app.allocator.*, req.body().?, .{});
+            defer json.deinit();
+            const exercise_id: i32 = json.value.exercise_id;
+
+            var completion_stmt = try app.main_db.prepare(
+                \\ SELECT
+                \\     COUNT(*)
+                \\ FROM completions
+                \\ WHERE user_id = ? AND exercise_id = ?
+            );
+            defer completion_stmt.deinit();
+
+            const completion_opt = try completion_stmt.one(i32, .{}, .{user_id, exercise_id});
+            if (completion_opt) |completion| {
+                try res.json(.{ .success = true, .solved = completion > 0 }, .{});
+                return;
+            } else {
+                try res.json(.{ .success = false, .err = "Exercise not found" }, .{});
+                return;
+            }
+        }
+    }
+
+    try res.json(.{ .success = true, .solved = false }, .{});
 }

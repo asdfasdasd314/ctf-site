@@ -38,6 +38,14 @@ pub const VulnerableAuth = struct {
         const user_info = try stmt.oneAlloc(UserInfo, self.allocator.*, .{}, .{ .id = user_id });
         return user_info;
     }
+
+    pub fn clearExpiredUsers(self: *VulnerableAuth) !void {
+        // Clear users every 30 minutes, except for the default users
+        var stmt = try self.vuln_auth_db.prepare("DELETE FROM users WHERE created_at < datetime('now', '-30 minute') AND id > 8");
+        defer stmt.deinit();
+
+        try stmt.exec(.{}, .{});
+    }
 };
 
 pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
@@ -69,6 +77,8 @@ pub fn vulnerableSignup(app: *App, req: *httpz.Request, res: *httpz.Response) !v
 }
 
 pub fn vulnerableRetrieveUserData(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    try app.vuln_auth_exercise.clearExpiredUsers();
+
     const json = try req.json(u32);
     const user_id = json.?;
 
