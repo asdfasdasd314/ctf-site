@@ -60,6 +60,7 @@ pub fn main() !void {
     // Exercises
     router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
     router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
+    router.post("/api/exercises/check-solved", exercise.checkSolved, .{});
 
     // Vulnerable User Authentication Exercise
     router.post("/api/exercises/1/vulnerable-login", vuln_auth_exercise.vulnerableLogin, .{});

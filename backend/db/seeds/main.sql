@@ -7,5 +7,5 @@ VALUES(
     100,
     0,
     'Exploit the vulnerable authentication system to get the flag',
-    'authentication,web-exploitation'
+    'authentication,web-exploitation',
 );
