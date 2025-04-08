@@ -1,5 +1,6 @@
 <script lang="ts">
 	import * as auth from '$lib/userAuth';
+	import DashboardStats from '$lib/DashboardStats.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { fly, fade } from 'svelte/transition';
@@ -82,7 +83,11 @@
 
 	<!-- Dashboard Content -->
 	<section class="py-12">
-		<div class="container mx-auto max-w-4xl px-4">
+		<!-- Statistics -->	
+		 <DashboardStats />
+
+		<!-- Account Stuff -->
+		<div class="container mt-10 mx-auto max-w-4xl px-4">
 			<div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8" in:fade={{ duration: 500 }}>
 				<!-- Account Actions -->
 				<div class="space-y-6">
