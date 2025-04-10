@@ -59,6 +59,7 @@ pub fn main() !void {
 
     // Exercises
     router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
+    router.get("/api/exercises/completed", exercise.getCompletedExercises, .{});
     router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
     router.post("/api/exercises/check-solved", exercise.checkSolved, .{});
 
