@@ -92,7 +92,7 @@ pub fn validateFlag(app: *App, req: *httpz.Request, res: *httpz.Response) !void 
                         \\ VALUES (?, ?)
                     );
                     defer completion_stmt.deinit();
-                    try completion_stmt.exec(.{}, .{user_id, exercise_id});
+                    try completion_stmt.exec(.{}, .{ user_id, exercise_id });
 
                     // Increment number of times exercise has been solved
                     var increment_count_stmt = try app.main_db.prepare(
@@ -137,7 +137,7 @@ pub fn checkSolved(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
             );
             defer completion_stmt.deinit();
 
-            const completion_opt = try completion_stmt.one(i32, .{}, .{user_id, exercise_id});
+            const completion_opt = try completion_stmt.one(i32, .{}, .{ user_id, exercise_id });
             if (completion_opt) |completion| {
                 try res.json(.{ .success = true, .solved = completion > 0 }, .{});
                 return;
@@ -149,4 +149,24 @@ pub fn checkSolved(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     }
 
     try res.json(.{ .success = true, .solved = false }, .{});
+}
+
+pub fn getCompletedExercises(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    const session_id_opt = req.cookies().get("session_id");
+    if (session_id_opt) |session_id| {
+        const user_id_opt = try app.retrieveUserIdFromSessionId(session_id);
+        if (user_id_opt) |user_id| {
+            defer app.allocator.free(user_id);
+            const completed_exercises = try app.getCompletedExercises(user_id);
+            defer {
+                for (completed_exercises) |*exercise| {
+                    exercise.deinit(app.allocator.*);
+                }
+                app.allocator.free(completed_exercises);
+            }
+            try res.json(.{ .success = true, .exercises = completed_exercises }, .{});
+            return;
+        }
+    }
+    try res.json(.{ .success = false, .err = "Not logged in" }, .{});
 }

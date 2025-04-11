@@ -1,6 +1,8 @@
 const sqlite = @import("sqlite");
 const std = @import("std");
 const vuln_auth_exercise = @import("exercises/vulnerable_auth.zig");
+const exercise = @import("exercises/exercise.zig");
+const ExposedExercise = exercise.ExposedExercise;
 
 pub const App = struct {
     allocator: *const std.mem.Allocator,
@@ -127,6 +129,37 @@ pub const App = struct {
         defer stmt.deinit();
 
         try stmt.exec(.{}, .{});
+    }
+
+    /// Returns a list of exercise IDs that the user has completed
+    /// On the caller to free the memory
+    pub fn getCompletedExercises(self: *App, user_id: []const u8) ![]ExposedExercise {
+        var stmt = try self.main_db.prepare(
+            \\ SELECT
+            \\     e.exercise_id,
+            \\     e.category,
+            \\     e.title,
+            \\     e.difficulty,
+            \\     e.points,
+            \\     e.solve_count,
+            \\     e.created_at,
+            \\     e.description,
+            \\     e.tags
+            \\ FROM exercises e
+            \\ JOIN completions c ON e.exercise_id = c.exercise_id
+            \\ WHERE c.user_id = ?
+        );
+        defer stmt.deinit();
+
+        return stmt.all(ExposedExercise, self.allocator.*, .{}, .{user_id});
+    }
+
+    /// On the caller to free the memory
+    pub fn getUserCreationDate(self: *App, user_id: []const u8) !?[]const u8 {
+        var stmt = try self.main_db.prepare("SELECT created_at FROM users WHERE user_id = ?");
+        defer stmt.deinit();
+
+        return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{user_id});
     }
 };
 

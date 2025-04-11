@@ -57,8 +57,12 @@ pub fn main() !void {
     router.post("/api/sign-up", user_auth.signup, .{});
     router.post("/api/delete-account", user_auth.deleteAccount, .{});
 
+    // User Info
+    router.get("/api/user/creation-date", user_auth.getUserCreationDate, .{});
+
     // Exercises
     router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
+    router.get("/api/exercises/completed", exercise.getCompletedExercises, .{});
     router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
     router.post("/api/exercises/check-solved", exercise.checkSolved, .{});
 

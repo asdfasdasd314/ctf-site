@@ -161,3 +161,20 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
         try res.json(.{ .success = false, .err = "Invalid username or password" }, .{});
     }
 }
+
+pub fn getUserCreationDate(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    const session_id_opt = req.cookies().get("session_id");
+    if (session_id_opt) |session_id| {
+        const user_id_opt = try app.retrieveUserIdFromSessionId(session_id);
+        if (user_id_opt) |user_id| {
+            defer app.allocator.free(user_id);
+            const creation_date_opt = try app.getUserCreationDate(user_id);
+            if (creation_date_opt) |creation_date| {
+                defer app.allocator.free(creation_date);
+                try res.json(.{ .success = true, .created_at = creation_date }, .{});
+                return;
+            }
+        }
+    }
+    try res.json(.{ .success = false, .err = "Not logged in" }, .{});
+}
