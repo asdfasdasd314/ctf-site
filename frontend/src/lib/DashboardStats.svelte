@@ -15,7 +15,7 @@
 		| 'OSINT'
 		| 'Network'
 		| 'Misc';
-	type Difficulty = 'Beginner' | 'Intermediate' | 'Advanced';
+	type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 	interface CategoryStats {
 		name: Category;
@@ -32,7 +32,6 @@
 
 	// State variables
 	let allExercises = $state<Exercise[]>([]);
-	let completedExercises = $state<Exercise[]>([]);
 	let isLoading = $state(true);
 	let error = $state<string | null>(null);
 
@@ -44,7 +43,7 @@
 		totalSolved: 0,
 		totalExercises: 0,
 		streak: 0,
-		lastActive: new Date().toISOString()
+		createdAt: new Date().toISOString()
 	});
 
 	// Calculate total stats
@@ -70,36 +69,25 @@
 		let startAngle = 0;
 		const segments = [];
 
-		if (totalExercises > 0) {
-			// First add the solved segment
-			const solvedAngle = (totalSolved / totalExercises) * 360;
-			segments.push({
-				type: 'solved',
-				startAngle,
-				endAngle: startAngle + solvedAngle,
-				color: '#10b981', // emerald-500
-				percentage: (totalSolved / totalExercises) * 100
-			});
-			startAngle += solvedAngle;
+		// First add the solved segment
+		const solvedAngle = (totalSolved / totalExercises) * 360;
+		segments.push({
+			type: 'solved',
+			startAngle,
+			endAngle: startAngle + solvedAngle,
+			color: '#10b981', // emerald-500
+			percentage: (totalSolved / totalExercises) * 100
+		});
+		startAngle += solvedAngle;
 
-			// Then add the remaining segment if there are any remaining exercises
-			if (totalRemaining > 0) {
-				segments.push({
-					type: 'remaining',
-					startAngle,
-					endAngle: 360,
-					color: '#e5e7eb', // gray-200
-					percentage: (totalRemaining / totalExercises) * 100
-				});
-			}
-		} else {
-			// If no exercises, show a full gray circle
+		// Then add the remaining segment if there are any remaining exercises
+		if (totalRemaining > 0) {
 			segments.push({
 				type: 'remaining',
-				startAngle: 0,
+				startAngle,
 				endAngle: 360,
 				color: '#e5e7eb', // gray-200
-				percentage: 100
+				percentage: (totalRemaining / totalExercises) * 100
 			});
 		}
 
@@ -179,11 +167,11 @@
 	// Get difficulty color class
 	function getDifficultyColor(difficulty: Difficulty): string {
 		switch (difficulty) {
-			case 'Beginner':
+			case 'Easy':
 				return 'bg-green-500';
-			case 'Intermediate':
+			case 'Medium':
 				return 'bg-yellow-500';
-			case 'Advanced':
+			case 'Hard':
 				return 'bg-red-500';
 			default:
 				return 'bg-gray-500';
@@ -219,9 +207,9 @@
 		];
 
 		difficultyStats = [
-			{ name: 'Beginner', total: 0, solved: 0 },
-			{ name: 'Intermediate', total: 0, solved: 0 },
-			{ name: 'Advanced', total: 0, solved: 0 }
+			{ name: 'Easy', total: 0, solved: 0 },
+			{ name: 'Medium', total: 0, solved: 0 },
+			{ name: 'Hard', total: 0, solved: 0 }
 		];
 
 		// Update category stats
@@ -252,7 +240,7 @@
 			totalSolved: allExercises.filter(ex => ex.isCompleted).length,
 			totalExercises: allExercises.length,
 			streak: 0, // TODO: Implement streak calculation
-			lastActive: new Date().toISOString() // TODO: Implement last active tracking
+			createdAt: userData.createdAt
 		};
 	}
 
@@ -274,6 +262,15 @@
 				}));
 			} else {
 				throw new Error(data.err || 'Failed to fetch completed exercises');
+			}
+
+			// Fetch account creation date
+			const creationDateResponse = await fetch('/api/user/creation-date', {
+				credentials: 'include'
+			});
+			const creationDateData = await creationDateResponse.json();
+			if (creationDateData.success) {
+				userData.createdAt = creationDateData.created_at;
 			}
 
 			// Update stats
@@ -425,9 +422,9 @@
 							</svg>
 						</div>
 						<div>
-							<p class="text-sm text-gray-500 dark:text-gray-400">Last Active</p>
+							<p class="text-sm text-gray-500 dark:text-gray-400">Account Created</p>
 							<p class="text-md font-bold text-gray-800 dark:text-white">
-								{formatRelativeTime(userData.lastActive)}
+								{formatRelativeTime(userData.createdAt)}
 							</p>
 						</div>
 					</div>
@@ -481,15 +478,15 @@
 							<span class="font-medium text-gray-800 dark:text-white">{difficulty.name}</span>
 						</div>
 						<span class="text-sm text-gray-500 dark:text-gray-400">
-							{difficulty.solved}/{difficulty.total} ({Math.round(
+							{difficulty.solved}/{difficulty.total} {difficulty.total > 0 ? `(${Math.round(
 								(difficulty.solved / difficulty.total) * 100
-							)}%)
+							)}%)` : '(0%)'}
 						</span>
 					</div>
 					<div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
 						<div
 							class={`h-2.5 rounded-full transition-all duration-1000 ease-out ${getDifficultyColor(difficulty.name)}`}
-							style="width: {(difficulty.solved / difficulty.total) * 100}%"
+							style="width: {difficulty.total > 0 ? (difficulty.solved / difficulty.total) * 100 : 0}%"
 						></div>
 					</div>
 				</div>
@@ -559,8 +556,8 @@
 				<div class="text-sm text-gray-600 dark:text-gray-400">Day Streak</div>
 			</div>
 			<div class="text-center">
-				<div class="text-2xl font-bold text-gray-800 dark:text-white">{formatRelativeTime(userData.lastActive)}</div>
-				<div class="text-sm text-gray-600 dark:text-gray-400">Last Active</div>
+				<div class="text-2xl font-bold text-gray-800 dark:text-white">{formatRelativeTime(userData.createdAt)}</div>
+				<div class="text-sm text-gray-600 dark:text-gray-400">Account Created</div>
 			</div>
 		</div>
 	</div>

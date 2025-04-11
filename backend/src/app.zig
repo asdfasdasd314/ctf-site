@@ -153,6 +153,14 @@ pub const App = struct {
 
         return stmt.all(ExposedExercise, self.allocator.*, .{}, .{user_id});
     }
+
+    /// On the caller to free the memory
+    pub fn getUserCreationDate(self: *App, user_id: []const u8) !?[]const u8 {
+        var stmt = try self.main_db.prepare("SELECT created_at FROM users WHERE user_id = ?");
+        defer stmt.deinit();
+
+        return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{user_id});
+    }
 };
 
 /// On the caller to free the memory
