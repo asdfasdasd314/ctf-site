@@ -31,56 +31,45 @@ pub const App = struct {
         return false;
     }
 
-    /// On the caller to free the memory
-    pub fn generateUserId(self: *App) ![]const u8 {
+    pub fn generateRandom64BitString(self: *App, comptime table_name: []const u8, comptime column_name: []const u8) ![]const u8 {
         var prng = std.crypto.random;
         var buf: [16]u8 = undefined;
 
         while (true) {
-            // Generate a random 64-bit user ID
-            const new_id = prng.int(usize);
-            const temp_hex_id = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_id});
+            // Generate a random 64-bit string
+            const new_string = prng.int(usize);
+            const temp_hex_string = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_string});
 
-            // Check if this ID already exists
-            var stmt = try self.main_db.prepare("SELECT user_id FROM users WHERE user_id = ?");
+            // Check if this string already exists
+            const query = std.fmt.comptimePrint("SELECT COUNT(*) FROM {s} WHERE {s} = ?", .{ table_name, column_name });
+            var stmt = try self.main_db.prepare(query);
             defer stmt.deinit();
 
-            const exists = try stmt.one(usize, .{}, .{ .user_id = temp_hex_id });
+            const exists = try stmt.one(usize, .{}, .{ .column_name = temp_hex_string });
 
-            // If ID doesn't exist, we can use it
-            if (exists == null) {
-                // Allocate memory for the final hex_id
-                const hex_id = try self.allocator.dupe(u8, temp_hex_id);
-                return hex_id;
+            // If string doesn't exist, we can use it
+            if (exists == 0) {
+                // Allocate memory for the final hex_string
+                const hex_string = try self.allocator.dupe(u8, temp_hex_string);
+                return hex_string;
             }
-            // Otherwise loop and try another random ID
+            // Otherwise loop and try another random string
         }
     }
 
     /// On the caller to free the memory
+    pub fn generateUserId(self: *App) ![]const u8 {
+        return try self.generateRandom64BitString("users", "user_id");
+    }
+
+    /// On the caller to free the memory
     pub fn generateSessionId(self: *App) ![]const u8 {
-        var prng = std.crypto.random;
-        var buf: [16]u8 = undefined;
+        return try self.generateRandom64BitString("sessions", "session_id");
+    }
 
-        while (true) {
-            // Generate a random 64-bit session ID
-            const new_id = prng.int(usize);
-            const temp_hex_id = try std.fmt.bufPrint(&buf, "{x:0>16}", .{new_id});
-
-            // Check if this ID already exists
-            var stmt = try self.main_db.prepare("SELECT session_id FROM sessions WHERE session_id = ?");
-            defer stmt.deinit();
-
-            const exists = try stmt.one(usize, .{}, .{ .session_id = temp_hex_id });
-
-            // If ID doesn't exist, we can use it
-            if (exists == null) {
-                // Allocate memory for the final hex_id
-                const hex_id = try self.allocator.dupe(u8, temp_hex_id);
-                return hex_id;
-            }
-            // Otherwise loop and try another random ID
-        }
+    /// On the caller to free the memory
+    pub fn generateSalt(self: *App) ![]const u8 {
+        return try self.generateRandom64BitString("salts", "salt");
     }
 
     /// On the caller to free the memory
@@ -181,17 +170,43 @@ pub fn createUser(app: *App, username: []const u8, password: []const u8) ![]cons
     const hash: []u8 = try app.allocator.alloc(u8, 116); // I'm not quite certain how this can be changed, but the hash generated is 116 bytes
     defer app.allocator.free(hash);
 
-    const params: std.crypto.pwhash.argon2.Params = .{ .t = 2, .m = 1000, .p = 1 };
-    const options: std.crypto.pwhash.argon2.HashOptions = .{ .allocator = app.allocator.*, .encoding = .phc, .mode = .argon2i, .params = params };
+    const key: []u8 = try app.allocator.alloc(u8, 16);
+    defer app.allocator.free(key);
 
-    _ = try std.crypto.pwhash.argon2.strHash(password, options, hash);
+    const salt = try app.generateSalt();
+    defer app.allocator.free(salt);
+
+    const params: std.crypto.pwhash.argon2.Params = .{
+        .t = 2,
+        .m = 1000,
+        .p = 1,
+    };
+
+    const options: std.crypto.pwhash.argon2.HashOptions = .{
+        .allocator = app.allocator.*,
+        .encoding = .phc,
+        .mode = .argon2i,
+        .params = params,
+    };
+
+    // We generate a key of 16 bytes that also encodes a salt to prevent rainbow table attacks
+    try std.crypto.pwhash.argon2.kdf(app.allocator.*, key, password, salt, params, .argon2i);
+
+    _ = try std.crypto.pwhash.argon2.strHash(key, options, hash);
 
     const user_id = try app.generateUserId();
 
-    var stmt = try app.main_db.prepare("INSERT INTO users (username, password, user_id) VALUES (?, ?, ?)");
-    defer stmt.deinit();
+    var stmt1 = try app.main_db.prepare("INSERT INTO users (username, password, user_id) VALUES (?, ?, ?)");
+    defer stmt1.deinit();
 
-    try stmt.exec(.{}, .{ .username = username, .password = hash, .user_id = user_id });
+    try stmt1.exec(.{}, .{ .username = username, .password = hash, .user_id = user_id });
+
+    // Let's also add the salt to the database
+    var stmt2 = try app.main_db.prepare("INSERT INTO salts (salt) VALUES (?)");
+    defer stmt2.deinit();
+
+
+    try stmt2.exec(.{}, .{ .salt = salt });
 
     return user_id;
 }
