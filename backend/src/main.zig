@@ -6,6 +6,9 @@ const user_auth = @import("user_auth.zig");
 const App = @import("app.zig").App;
 const vuln_auth_exercise = @import("exercises/vulnerable_auth.zig");
 const exercise = @import("exercises/exercise.zig");
+const RateLimitter = @import("rate_limitter.zig").RateLimitter;
+const RateCount = @import("rate_limitter.zig").RateCount;
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer {
@@ -48,7 +51,15 @@ pub fn main() !void {
     var app = App.init(&allocator, &main_db, &vuln_auth);
 
     var server = try httpz.Server(*App).init(allocator, .{ .port = port }, &app);
+    defer server.deinit();
+
+    var ip_addresses = std.AutoHashMap(u32, RateCount).init(allocator);
+    defer ip_addresses.deinit();
+
+    const rate_limitter = try server.middleware(RateLimitter, .{ .ip_addresses = &ip_addresses, .max_requests = 60, .reset_interval = 60 });
+
     var router = try server.router(.{});
+    router.middlewares = &.{rate_limitter};
 
     // Main app
     router.post("/api/login", user_auth.login, .{});

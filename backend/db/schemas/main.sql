@@ -29,3 +29,7 @@ CREATE TABLE sessions (
     session_id TEXT NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE salts (
+    salt TEXT PRIMARY KEY
+);
