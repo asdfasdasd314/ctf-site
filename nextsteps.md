@@ -1,4 +1,10 @@
 # TODO
-- Make it so the frontend pages only make 1 API call wherever is necessary so that the rate limiting doesn't count like 8 times when visiting the dashboard or whatever
-- Open SSH or Docker container to serve web exploitation exercises
+- Add a message if user has been rate limited
+- Purchase URL
+- Implement a second exercise
+    - Immediate redirect
+        - Encourages use of Postman or cURL
+        - Flag in the HTML
+- Work on deploying app soon, and getting up smaller scale challenges
 - Multi factor auth
+- Some parts of the site make no sense, do a full review

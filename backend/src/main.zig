@@ -56,31 +56,34 @@ pub fn main() !void {
     var ip_addresses = std.AutoHashMap(u32, RateCount).init(allocator);
     defer ip_addresses.deinit();
 
-    const rate_limitter = try server.middleware(RateLimitter, .{ .ip_addresses = &ip_addresses, .max_requests = 60, .reset_interval = 60 });
+    // Create different rate limiters for different endpoints
+    const default_rate_limitter = try server.middleware(RateLimitter, .{ .ip_addresses = &ip_addresses, .max_requests = 200, .reset_interval = 60 });
+
+    const sensitive_rate_limitter = try server.middleware(RateLimitter, .{ .ip_addresses = &ip_addresses, .max_requests = 100, .reset_interval = 60, .path = "/api/exercises" });
 
     var router = try server.router(.{});
-    router.middlewares = &.{rate_limitter};
+    router.middlewares = &.{default_rate_limitter};
 
     // Main app
-    router.post("/api/login", user_auth.login, .{});
+    router.post("/api/login", user_auth.login, .{ .middlewares = &.{sensitive_rate_limitter} });
     router.get("/api/validate-session", user_auth.validateSession, .{});
     router.post("/api/logout", user_auth.logout, .{});
-    router.post("/api/sign-up", user_auth.signup, .{});
-    router.post("/api/delete-account", user_auth.deleteAccount, .{});
+    router.post("/api/sign-up", user_auth.signup, .{ .middlewares = &.{sensitive_rate_limitter} });
+    router.post("/api/delete-account", user_auth.deleteAccount, .{ .middlewares = &.{sensitive_rate_limitter} });
 
     // User Info
     router.get("/api/user/creation-date", user_auth.getUserCreationDate, .{});
 
     // Exercises
-    router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
-    router.get("/api/exercises/completed", exercise.getCompletedExercises, .{});
-    router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
+    router.get("/api/exercises", exercise.retrieveAllExerciseData, .{ .middlewares = &.{sensitive_rate_limitter} });
+    router.get("/api/exercises/completed", exercise.getCompletedExercises, .{ .middlewares = &.{sensitive_rate_limitter} });
+    router.post("/api/exercises/validate-flag", exercise.validateFlag, .{ .middlewares = &.{sensitive_rate_limitter} });
     router.post("/api/exercises/check-solved", exercise.checkSolved, .{});
 
     // Vulnerable User Authentication Exercise
-    router.post("/api/exercises/1/vulnerable-login", vuln_auth_exercise.vulnerableLogin, .{});
-    router.post("/api/exercises/1/vulnerable-signup", vuln_auth_exercise.vulnerableSignup, .{});
-    router.post("/api/exercises/1/vulnerable-retrieve-user-data", vuln_auth_exercise.vulnerableRetrieveUserData, .{});
+    router.post("/api/exercises/1/vulnerable-login", vuln_auth_exercise.vulnerableLogin, .{ .middlewares = &.{sensitive_rate_limitter} });
+    router.post("/api/exercises/1/vulnerable-signup", vuln_auth_exercise.vulnerableSignup, .{ .middlewares = &.{sensitive_rate_limitter} });
+    router.post("/api/exercises/1/vulnerable-retrieve-user-data", vuln_auth_exercise.vulnerableRetrieveUserData, .{ .middlewares = &.{sensitive_rate_limitter} });
 
     std.debug.print("Listening on port {}\n", .{port});
     try server.listen();

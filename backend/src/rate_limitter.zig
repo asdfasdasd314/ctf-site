@@ -11,16 +11,26 @@ pub const RateLimitter = struct {
     ip_addresses: *HashMap(u32, RateCount),
     max_requests: u32,
     reset_interval: i64,
+    path: ?[]const u8,
 
     pub fn init(config: Config) !RateLimitter {
         return RateLimitter{
             .ip_addresses = config.ip_addresses,
             .max_requests = config.max_requests,
             .reset_interval = config.reset_interval,
+            .path = config.path,
         };
     }
 
     pub fn execute(self: *const RateLimitter, req: *httpz.Request, res: *httpz.Response, executor: anytype) !void {
+        // Skip rate limiting if this middleware is path-specific and doesn't match
+        if (self.path) |path| {
+            // Check if the patch is contained in the request path
+            if (!std.mem.startsWith(u8, req.url.path, path)) {
+                return executor.next();
+            }
+        }
+
         const ip = req.address.in.sa.addr;
         if (self.ip_addresses.get(ip)) |rate_count| {
             if (std.time.timestamp() - rate_count.last_reset >= self.reset_interval) {
@@ -45,5 +55,6 @@ pub const RateLimitter = struct {
         ip_addresses: *HashMap(u32, RateCount),
         max_requests: u32,
         reset_interval: i64,
+        path: ?[]const u8 = null,
     };
 };
