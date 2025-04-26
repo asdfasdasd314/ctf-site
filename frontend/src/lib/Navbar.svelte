@@ -14,7 +14,7 @@
 		} else {
 			rightLinks = [
 				{ name: 'Login', href: '/login' },
-				{ name: 'Sign Up', href: '/sign-up' }
+				{ name: 'Sign Up', href: '/signup' }
 			];
 		}
 	});

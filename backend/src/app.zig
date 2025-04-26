@@ -9,24 +9,53 @@ pub const App = struct {
     main_db: *sqlite.Db,
     vuln_auth_exercise: *vuln_auth_exercise.VulnerableAuth,
 
-    pub fn init(allocator: *const std.mem.Allocator, main_db: *sqlite.Db, vuln_auth: *vuln_auth_exercise.VulnerableAuth) App {
+    pub fn init(allocator: *const std.mem.Allocator, main_db: *sqlite.Db, vuln_auth: *vuln_auth_exercise.VulnerableAuth) !App {
         return App{ .allocator = allocator, .main_db = main_db, .vuln_auth_exercise = vuln_auth };
     }
 
+    pub fn deinit(self: *App) void {
+        self.vuln_auth_exercise.deinit();
+        self.allocator.destroy(self.vuln_auth_exercise);
+    }
+
     pub fn checkPassword(self: *App, user_id: []const u8, pw: []const u8) !bool {
-        const options: std.crypto.pwhash.argon2.VerifyOptions = .{ .allocator = self.allocator.* };
-        const hash_opt = try self.retrievePasswordHashFromUserId(user_id);
-        if (hash_opt) |hash| {
-            defer self.allocator.free(hash);
-            std.crypto.pwhash.argon2.strVerify(hash, pw, options) catch |err| switch (err) {
-                std.crypto.pwhash.HasherError.PasswordVerificationFailed => {
-                    return false;
-                },
-                else => {
-                    return err;
-                },
-            };
-            return true;
+        // First get the salt for this user
+        var stmt1 = try self.main_db.prepare("SELECT salt FROM users WHERE user_id = ?");
+        defer stmt1.deinit();
+
+        const salt_opt = try stmt1.oneAlloc([]const u8, self.allocator.*, .{}, .{ .user_id = user_id });
+        if (salt_opt) |salt| {
+            defer self.allocator.free(salt);
+
+            // Get the stored hash
+            const hash_opt = try self.retrievePasswordHashFromUserId(user_id);
+            if (hash_opt) |hash| {
+                defer self.allocator.free(hash);
+
+                // Hash the provided password with the salt
+                const key: []u8 = try self.allocator.alloc(u8, 16);
+                defer self.allocator.free(key);
+
+                const params: std.crypto.pwhash.argon2.Params = .{
+                    .t = 2,
+                    .m = 1000,
+                    .p = 1,
+                };
+
+                try std.crypto.pwhash.argon2.kdf(self.allocator.*, key, pw, salt, params, .argon2i);
+
+                // Compare the hashes
+                const options: std.crypto.pwhash.argon2.VerifyOptions = .{ .allocator = self.allocator.* };
+                std.crypto.pwhash.argon2.strVerify(hash, key, options) catch |err| switch (err) {
+                    std.crypto.pwhash.HasherError.PasswordVerificationFailed => {
+                        return false;
+                    },
+                    else => {
+                        return err;
+                    },
+                };
+                return true;
+            }
         }
         return false;
     }
@@ -69,7 +98,7 @@ pub const App = struct {
 
     /// On the caller to free the memory
     pub fn generateSalt(self: *App) ![]const u8 {
-        return try self.generateRandom64BitString("salts", "salt");
+        return try self.generateRandom64BitString("users", "salt");
     }
 
     /// On the caller to free the memory
@@ -196,17 +225,10 @@ pub fn createUser(app: *App, username: []const u8, password: []const u8) ![]cons
 
     const user_id = try app.generateUserId();
 
-    var stmt1 = try app.main_db.prepare("INSERT INTO users (username, password, user_id) VALUES (?, ?, ?)");
+    var stmt1 = try app.main_db.prepare("INSERT INTO users (username, password, salt, user_id) VALUES (?, ?, ?, ?)");
     defer stmt1.deinit();
 
-    try stmt1.exec(.{}, .{ .username = username, .password = hash, .user_id = user_id });
-
-    // Let's also add the salt to the database
-    var stmt2 = try app.main_db.prepare("INSERT INTO salts (salt) VALUES (?)");
-    defer stmt2.deinit();
-
-
-    try stmt2.exec(.{}, .{ .salt = salt });
+    try stmt1.exec(.{}, .{ .username = username, .password = hash, .salt = salt, .user_id = user_id });
 
     return user_id;
 }

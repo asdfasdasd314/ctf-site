@@ -11,8 +11,23 @@ const UserInfo = struct {
 pub const VulnerableAuth = struct {
     vuln_auth_db: *sqlite.Db,
     allocator: *const std.mem.Allocator,
-    pub fn init(vuln_auth_db: *sqlite.Db, allocator: *const std.mem.Allocator) VulnerableAuth {
-        return VulnerableAuth{ .vuln_auth_db = vuln_auth_db, .allocator = allocator };
+    available_ids: std.ArrayList(u32),
+    next_id: u32,
+
+    pub fn init(vuln_auth_db: *sqlite.Db, allocator: *const std.mem.Allocator) !VulnerableAuth {
+        var available_ids = std.ArrayList(u32).init(allocator.*);
+        errdefer available_ids.deinit();
+
+        return VulnerableAuth{
+            .vuln_auth_db = vuln_auth_db,
+            .allocator = allocator,
+            .available_ids = available_ids,
+            .next_id = 9, // Start after the default users (1-8)
+        };
+    }
+
+    pub fn deinit(self: *VulnerableAuth) void {
+        self.available_ids.deinit();
     }
 
     pub fn retrieveUserId(self: *VulnerableAuth, username: []const u8, password: []const u8) !?u32 {
@@ -24,10 +39,20 @@ pub const VulnerableAuth = struct {
     }
 
     pub fn createUser(self: *VulnerableAuth, username: []const u8, password: []const u8) !void {
-        var stmt = try self.vuln_auth_db.prepare("INSERT INTO users (username, password) VALUES (?, ?)");
+        // Get an available ID from the stack or use the next ID
+        var user_id: u32 = undefined;
+        const top_id = self.available_ids.pop();
+        if (top_id) |id| {
+            user_id = id;
+        } else {
+            user_id = self.next_id;
+            self.next_id += 1;
+        }
+
+        var stmt = try self.vuln_auth_db.prepare("INSERT INTO users (id, username, password) VALUES (?, ?, ?)");
         defer stmt.deinit();
 
-        try stmt.exec(.{}, .{ .username = username, .password = password });
+        try stmt.exec(.{}, .{ .id = user_id, .username = username, .password = password });
     }
 
     /// On the caller to free the memory
@@ -40,11 +65,25 @@ pub const VulnerableAuth = struct {
     }
 
     pub fn clearExpiredUsers(self: *VulnerableAuth) !void {
-        // Clear users every 30 minutes, except for the default users
-        var stmt = try self.vuln_auth_db.prepare("DELETE FROM users WHERE created_at < datetime('now', '-30 minute') AND id > 8");
+        // First find all users that have expired
+        var stmt = try self.vuln_auth_db.prepare("SELECT id FROM users WHERE created_at < datetime('now', '-30 minute') AND id > 8");
         defer stmt.deinit();
 
-        try stmt.exec(.{}, .{});
+        const expired_users = try stmt.all(u32, self.allocator.*, .{}, .{});
+        defer self.allocator.free(expired_users);
+
+        for (expired_users) |user_id| {
+            try self.available_ids.append(user_id);
+        }
+
+        // Then delete them
+        var delete_stmt = try self.vuln_auth_db.prepare("DELETE FROM users WHERE id = ?");
+        defer delete_stmt.deinit();
+
+        for (expired_users) |user_id| {
+            delete_stmt.reset();
+            try delete_stmt.exec(.{}, .{ .id = user_id });
+        }
     }
 };
 

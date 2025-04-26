@@ -2,8 +2,6 @@
 	import { onMount } from 'svelte';
 	import { fly, fade, scale } from 'svelte/transition';
 
-	import objdump from '$lib/assets/objdump.png';
-
 	// For the scrolling exercises bar
 	let exercisesContainer: HTMLElement;
 	let isDragging = false;
@@ -12,14 +10,8 @@
 
 	// Sample exercises - replace with your actual exercises
 	const exercises = [
-		{ id: 1, title: 'Web Exploitation Basics', difficulty: 'Beginner', category: 'Web' },
-		{ id: 2, title: 'Cryptography Challenges', difficulty: 'Intermediate', category: 'Crypto' },
-		{ id: 3, title: 'Binary Exploitation', difficulty: 'Advanced', category: 'Binary' },
-		{ id: 4, title: 'Forensics Investigation', difficulty: 'Intermediate', category: 'Forensics' },
-		{ id: 5, title: 'Reverse Engineering 101', difficulty: 'Beginner', category: 'Reverse' },
-		{ id: 6, title: 'OSINT Challenges', difficulty: 'Beginner', category: 'OSINT' },
-		{ id: 7, title: 'Network Security', difficulty: 'Intermediate', category: 'Network' },
-		{ id: 8, title: 'Advanced Cryptography', difficulty: 'Advanced', category: 'Crypto' }
+		{ id: 1, title: 'Vulnerable Authentication', difficulty: 'Beginner', category: 'Web' },
+		{ id: 2, title: 'Misdirection', difficulty: 'Medium', category: 'Web' },
 	];
 
 	// Learning resources
@@ -116,7 +108,7 @@
 				<div class="md:w-1/2 relative" in:fade={{ delay: 300, duration: 1000 }}>
 					<div class="relative w-full h-64 md:h-96">
 						<div class="absolute inset-0 flex justify-center items-start">
-							<img src={objdump} alt="Terminal" class="object-contain h-full" />
+							<img src="/objdump.png" alt="Terminal" class="object-contain h-full" />
 						</div>
 					</div>
 				</div>

@@ -148,7 +148,7 @@
 				<div class="mt-6 text-center">
 					<p class="text-sm text-gray-600 dark:text-gray-400">
 						Don't have an account?
-						<a href="/sign-up" class="text-emerald-500 hover:text-emerald-600 font-medium">
+						<a href="/signup" class="text-emerald-500 hover:text-emerald-600 font-medium">
 							Sign up
 						</a>
 					</p>

@@ -5,6 +5,9 @@
     - Immediate redirect
         - Encourages use of Postman or cURL
         - Flag in the HTML
+- Third exercise
+    - Disabled scrolling (inspired by when I was trying to look at SAT range for UMich on a site)
 - Work on deploying app soon, and getting up smaller scale challenges
+- CI/CD system, because I will deploy but then keep iterating
 - Multi factor auth
 - Some parts of the site make no sense, do a full review
