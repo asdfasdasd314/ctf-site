@@ -5,6 +5,7 @@ const env_zig = @import("env.zig");
 const user_auth = @import("user_auth.zig");
 const App = @import("app.zig").App;
 const vuln_auth_exercise = @import("exercises/vulnerable_auth.zig");
+const adblocker_exercise = @import("exercises/adblocker.zig");
 const exercise = @import("exercises/exercise.zig");
 const static_files = @import("static_files.zig");
 
@@ -69,6 +70,7 @@ pub fn main() !void {
     // Exercises
     api_router.get("/api/exercises", exercise.retrieveAllExerciseData, .{});
     api_router.get("/api/exercises/completed", exercise.getCompletedExercises, .{});
+    api_router.get("/api/exercises/streak", exercise.getStreak, .{});
     api_router.post("/api/exercises/validate-flag", exercise.validateFlag, .{});
     api_router.post("/api/exercises/check-solved", exercise.checkSolved, .{});
 
@@ -76,6 +78,9 @@ pub fn main() !void {
     api_router.post("/api/exercises/1/vulnerable-login", vuln_auth_exercise.vulnerableLogin, .{});
     api_router.post("/api/exercises/1/vulnerable-signup", vuln_auth_exercise.vulnerableSignup, .{});
     api_router.post("/api/exercises/1/vulnerable-retrieve-user-data", vuln_auth_exercise.vulnerableRetrieveUserData, .{});
+
+    // Adblocker Exercise
+    api_router.get("/api/exercises/3/story", adblocker_exercise.adblockerStory, .{});
 
     // Create static file router
     var static_router = try server.router(.{});

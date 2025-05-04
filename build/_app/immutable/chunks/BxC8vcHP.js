@@ -1,0 +1,1 @@
+import{w as a}from"./DHEU4yHs.js";const e=a(!1);async function n(){try{const t=await(await fetch("/api/validate-session",{method:"GET",credentials:"include",headers:{"Content-Type":"application/json"}})).json();return t.success?e.set(!0):e.set(!1),t.success}catch(s){return e.set(!1),console.error("Session check failed:",s),!1}}export{n as c,e as l};

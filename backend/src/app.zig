@@ -179,6 +179,13 @@ pub const App = struct {
 
         return stmt.oneAlloc([]const u8, self.allocator.*, .{}, .{user_id});
     }
+
+    pub fn getExerciseCompletionTimes(self: *App, user_id: []const u8) ![]u64 {
+        var stmt = try self.main_db.prepare("SELECT strftime('%s', completed_at) AS unix_ts FROM completions WHERE user_id = ? ORDER BY unix_ts DESC");
+        defer stmt.deinit();
+
+        return stmt.all(u64, self.allocator.*, .{}, .{user_id});
+    }
 };
 
 /// On the caller to free the memory

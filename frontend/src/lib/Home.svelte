@@ -10,23 +10,23 @@
 
 	// Sample exercises - replace with your actual exercises
 	const exercises = [
-		{ id: 1, title: 'Vulnerable Authentication', difficulty: 'Beginner', category: 'Web' },
-		{ id: 2, title: 'Misdirection', difficulty: 'Medium', category: 'Web' },
+		{ id: 1, title: 'Vulnerable Authentication', difficulty: 'Easy', category: 'Web' },
+		{ id: 2, title: 'Misdirection', difficulty: 'Easy', category: 'Web' },
 	];
 
 	// Learning resources
 	const resources = [
 		{
-			name: 'Pico CTF',
+			name: 'picoCTF',
 			url: 'https://picoctf.org',
 			description:
 				'This was the main resource I used because they offer fun and challenging exercises!'
 		},
 		{
 			name: 'Pwnable',
-			url: 'https://www.pwnable.tw/',
+			url: 'https://www.pwnable.kr/',
 			description:
-				"Some weird stuff happens with this site... but it's great for binary exploitation"
+				"This site is inconsistent with when it's up, but it's great for binary exploitation"
 		},
 
 		// These two were by v0
@@ -87,8 +87,7 @@
 						Master Cybersecurity Through <span class="text-emerald-500">Challenges</span>
 					</h1>
 					<p class="text-lg md:text-xl mb-8 text-gray-700 dark:text-gray-300">
-						Sharpen your hacking skills with our collection of Capture The Flag challenges designed
-						for all skill levels.
+						Sharpen your hacking skills with Capture The Flag challenges designed for all skill levels.
 					</p>
 					<div class="flex flex-wrap gap-4">
 						<a
@@ -132,7 +131,7 @@
 			<div class="grid md:grid-cols-2 gap-12 items-center">
 				<div in:fly={{ x: -50, duration: 1000 }}>
 					<img
-						src="/placeholder.svg?height=400&width=600"
+						src="/sampleExercise.svg?height=400&width=600"
 						alt="A pic of one of my exercises will go here"
 						class="rounded-lg shadow-lg w-full"
 					/>
@@ -194,7 +193,7 @@
 				Featured <span class="text-emerald-500">Challenges</span>
 			</h2>
 			<p class="text-center text-gray-700 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-				Explore our collection of cybersecurity challenges designed to test and improve your skills.
+				Explore some cybersecurity challenges designed to test and improve your skills.
 				Drag to scroll through the challenges.
 			</p>
 

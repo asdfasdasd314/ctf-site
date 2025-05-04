@@ -4,32 +4,32 @@
 
 	let leftLinks = [
 		{ name: 'Home', href: '/' },
-		{ name: 'Exercises', href: '/exercises' }
+		{ name: 'Exercises', href: '/exercises' },
+		{ name: 'About', href: '/about' },
+		{ name: 'Support', href: '/support' },
 	];
+
 	let rightLinks: { name: string; href: string }[] = $state([]);
 
 	auth.loggedIn.subscribe((loggedIn) => {
 		if (loggedIn) {
 			rightLinks = [{ name: 'Dashboard', href: '/dashboard' }];
 		} else {
-			rightLinks = [
-				{ name: 'Login', href: '/login' },
-				{ name: 'Sign Up', href: '/signup' }
-			];
+			rightLinks = [{ name: 'Login', href: '/login' }, { name: 'Sign Up', href: '/signup' }];
 		}
 	});
 </script>
 
 <div class="mb-14">
-	<div id="navbar" class="flex flex-row fixed top-0 left-0 z-50 w-full shadow-md bg-slate-800">
+	<div id="navbar" class="flex flex-row fixed top-0 left-0 z-100 w-full shadow-md bg-slate-800">
 		<div class="flex flex-row mr-auto">
 			{#each leftLinks as link}
-				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
+				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700" onclick={() => document.body.style.overflow = 'auto'}>{link.name}</a>
 			{/each}
 		</div>
 		<div class="flex flex-row ml-auto">
 			{#each rightLinks as link}
-				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700">{link.name}</a>
+				<a href={link.href} class="text-slate-200 px-6 py-4 hover:bg-slate-700" onclick={() => document.body.style.overflow = 'auto'}>{link.name}</a>
 			{/each}
 		</div>
 	</div>

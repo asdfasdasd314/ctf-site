@@ -230,7 +230,7 @@
 	}
 
 	// Update stats based on exercises
-	function updateStats() {
+	async function updateStats() {
 		// Reset stats
 		categoryStats = [
 			{ name: 'Web', total: 0, solved: 0, color: '#10b981' },
@@ -271,12 +271,22 @@
 			}
 		}
 
+		// Update streak
+		const streakResponse = await fetch('/api/exercises/streak', {
+			credentials: 'include'
+		});
+		const streakData = await streakResponse.json();
+		let streak = 0;
+		if (streakData.success) {
+			streak = streakData.streak;
+		}
+
 		// Update user data
 		userData = {
 			totalPoints: allExercises.reduce((sum, ex) => sum + (ex.isCompleted ? ex.points : 0), 0),
 			totalSolved: allExercises.filter(ex => ex.isCompleted).length,
 			totalExercises: allExercises.length,
-			streak: 0, // TODO: Implement streak calculation
+			streak: streak,
 			createdAt: userData.createdAt
 		};
 	}
@@ -311,7 +321,7 @@
 			}
 
 			// Update stats
-			updateStats();
+			await updateStats();
 
 			// Animate progress
 			progressTween.set(completionPercentage);

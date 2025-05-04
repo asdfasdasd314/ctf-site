@@ -88,6 +88,8 @@ pub const VulnerableAuth = struct {
 };
 
 pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    try app.vuln_auth_exercise.clearExpiredUsers();
+
     const json = try req.json(UserInfo);
     const username = json.?.username;
     const password = json.?.password;
@@ -101,6 +103,8 @@ pub fn vulnerableLogin(app: *App, req: *httpz.Request, res: *httpz.Response) !vo
 }
 
 pub fn vulnerableSignup(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    try app.vuln_auth_exercise.clearExpiredUsers();
+
     const json = try req.json(UserInfo);
     const username = json.?.username;
     const password = json.?.password;
