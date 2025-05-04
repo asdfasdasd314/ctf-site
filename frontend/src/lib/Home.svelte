@@ -2,8 +2,6 @@
 	import { onMount } from 'svelte';
 	import { fly, fade, scale } from 'svelte/transition';
 
-	import objdump from '$lib/assets/objdump.png';
-
 	// For the scrolling exercises bar
 	let exercisesContainer: HTMLElement;
 	let isDragging = false;
@@ -12,29 +10,23 @@
 
 	// Sample exercises - replace with your actual exercises
 	const exercises = [
-		{ id: 1, title: 'Web Exploitation Basics', difficulty: 'Beginner', category: 'Web' },
-		{ id: 2, title: 'Cryptography Challenges', difficulty: 'Intermediate', category: 'Crypto' },
-		{ id: 3, title: 'Binary Exploitation', difficulty: 'Advanced', category: 'Binary' },
-		{ id: 4, title: 'Forensics Investigation', difficulty: 'Intermediate', category: 'Forensics' },
-		{ id: 5, title: 'Reverse Engineering 101', difficulty: 'Beginner', category: 'Reverse' },
-		{ id: 6, title: 'OSINT Challenges', difficulty: 'Beginner', category: 'OSINT' },
-		{ id: 7, title: 'Network Security', difficulty: 'Intermediate', category: 'Network' },
-		{ id: 8, title: 'Advanced Cryptography', difficulty: 'Advanced', category: 'Crypto' }
+		{ id: 1, title: 'Vulnerable Authentication', difficulty: 'Easy', category: 'Web' },
+		{ id: 2, title: 'Misdirection', difficulty: 'Easy', category: 'Web' },
 	];
 
 	// Learning resources
 	const resources = [
 		{
-			name: 'Pico CTF',
+			name: 'picoCTF',
 			url: 'https://picoctf.org',
 			description:
 				'This was the main resource I used because they offer fun and challenging exercises!'
 		},
 		{
 			name: 'Pwnable',
-			url: 'https://www.pwnable.tw/',
+			url: 'https://www.pwnable.kr/',
 			description:
-				"Some weird stuff happens with this site... but it's great for binary exploitation"
+				"This site is inconsistent with when it's up, but it's great for binary exploitation"
 		},
 
 		// These two were by v0
@@ -95,8 +87,7 @@
 						Master Cybersecurity Through <span class="text-emerald-500">Challenges</span>
 					</h1>
 					<p class="text-lg md:text-xl mb-8 text-gray-700 dark:text-gray-300">
-						Sharpen your hacking skills with our collection of Capture The Flag challenges designed
-						for all skill levels.
+						Sharpen your hacking skills with Capture The Flag challenges designed for all skill levels.
 					</p>
 					<div class="flex flex-wrap gap-4">
 						<a
@@ -116,7 +107,7 @@
 				<div class="md:w-1/2 relative" in:fade={{ delay: 300, duration: 1000 }}>
 					<div class="relative w-full h-64 md:h-96">
 						<div class="absolute inset-0 flex justify-center items-start">
-							<img src={objdump} alt="Terminal" class="object-contain h-full" />
+							<img src="/objdump.png" alt="Terminal" class="object-contain h-full" />
 						</div>
 					</div>
 				</div>
@@ -140,7 +131,7 @@
 			<div class="grid md:grid-cols-2 gap-12 items-center">
 				<div in:fly={{ x: -50, duration: 1000 }}>
 					<img
-						src="/placeholder.svg?height=400&width=600"
+						src="/sampleExercise.svg?height=400&width=600"
 						alt="A pic of one of my exercises will go here"
 						class="rounded-lg shadow-lg w-full"
 					/>
@@ -202,7 +193,7 @@
 				Featured <span class="text-emerald-500">Challenges</span>
 			</h2>
 			<p class="text-center text-gray-700 dark:text-gray-300 mb-12 max-w-2xl mx-auto">
-				Explore our collection of cybersecurity challenges designed to test and improve your skills.
+				Explore some cybersecurity challenges designed to test and improve your skills.
 				Drag to scroll through the challenges.
 			</p>
 

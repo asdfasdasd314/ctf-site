@@ -9,6 +9,7 @@
 	onMount(async () => {
 		await auth.checkAuth();
 	});
+
 </script>
 
 <!-- This is going to be subject to change, this is what I want right now -->

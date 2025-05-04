@@ -25,6 +25,11 @@ pub fn login(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
     if (user_id) |id| {
         defer app.allocator.free(id);
         if (try app.checkPassword(id, password)) {
+            // Clear any invalid sessions
+            var stmt = try app.main_db.prepare("DELETE FROM sessions WHERE user_id = ?");
+            defer stmt.deinit();
+            try stmt.exec(.{}, .{ .user_id = id });
+
             const session_id = try createSession(app, id);
             defer app.allocator.free(session_id);
 
@@ -149,6 +154,13 @@ pub fn deleteAccount(app: *App, req: *httpz.Request, res: *httpz.Response) !void
             var stmt = try app.main_db.prepare("DELETE FROM users WHERE user_id = ?");
             defer stmt.deinit();
             try stmt.exec(.{}, .{
+                .user_id = id,
+            });
+
+            // Also remove their completions of exercises
+            var stmt2 = try app.main_db.prepare("DELETE FROM completions WHERE user_id = ?");
+            defer stmt2.deinit();
+            try stmt2.exec(.{}, .{
                 .user_id = id,
             });
         }

@@ -1,4 +1,8 @@
 # TODO
-- Make it so the frontend pages only make 1 API call wherever is necessary so that the rate limiting doesn't count like 8 times when visiting the dashboard or whatever
-- Open SSH or Docker container to serve web exploitation exercises
+
+- Move database files into project directory
+- Dockerize
+- Deploy
+
+- CI/CD system, because I will deploy but then keep iterating
 - Multi factor auth

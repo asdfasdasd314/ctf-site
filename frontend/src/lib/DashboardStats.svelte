@@ -69,6 +69,18 @@
 		let startAngle = 0;
 		const segments = [];
 
+		// If no exercises are solved, show a full gray circle
+		if (totalSolved === 0) {
+			segments.push({
+				type: 'remaining',
+				startAngle: 0,
+				endAngle: 360,
+				color: '#e5e7eb', // gray-200
+				percentage: 100
+			});
+			return segments;
+		}
+
 		// First add the solved segment
 		const solvedAngle = (totalSolved / totalExercises) * 360;
 		segments.push({
@@ -96,10 +108,16 @@
 
 	// Convert angle to SVG arc path
 	function describeArc(startAngle: number, endAngle: number) {
+		// Special case for full circle (360 degrees)
+		if (endAngle - startAngle === 360) {
+			return `M 100,100 m -${radius},0 a ${radius},${radius} 0 1,0 ${radius * 2},0 a ${radius},${radius} 0 1,0 -${radius * 2},0`;
+		}
+
 		const start = polarToCartesian(radius, startAngle);
 		const end = polarToCartesian(radius, endAngle);
-		// Always use large arc flag of 1 to draw in one direction
-		const largeArcFlag = 1;
+		// Calculate whether to use large arc based on angle difference
+		const angleDiff = endAngle - startAngle;
+		const largeArcFlag = angleDiff > 180 ? 1 : 0;
 
 		return [
 			'M',
@@ -155,7 +173,7 @@
 				name: 'Remaining',
 				startAngle,
 				endAngle: 360,
-				color: '#e5e7eb', // gray-200
+				color: '#e5e7eb',
 				solved: 0,
 				total: totalRemaining
 			});
@@ -180,20 +198,39 @@
 
 	// Format date to relative time (e.g., "2 days ago")
 	function formatRelativeTime(dateString: string): string {
-		const date = new Date(dateString);
+		// Parse the date string and convert to local timezone
+		const date = new Date(dateString + 'Z'); // Add 'Z' to indicate UTC time
 		const now = new Date();
 		const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-		if (diffInSeconds < 60) return 'just now';
-		if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
-		if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
-		if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+		if (diffInSeconds < 60) return `${diffInSeconds} seconds ago`;
+		if (diffInSeconds < 3600) {
+			const minutes = Math.floor(diffInSeconds / 60);
+			return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'} ago`;
+		}
+		if (diffInSeconds < 86400) {
+			const hours = Math.floor(diffInSeconds / 3600);
+			return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+		}
+		if (diffInSeconds < 604800) {
+			const days = Math.floor(diffInSeconds / 86400);
+			return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+		}
+		if (diffInSeconds < 2592000) {
+			const weeks = Math.floor(diffInSeconds / 604800);
+			return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+		}
+		if (diffInSeconds < 31536000) {
+			const months = Math.floor(diffInSeconds / 2592000);
+			return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+		}
 
-		return date.toLocaleDateString();
+		const years = Math.floor(diffInSeconds / 31536000);
+		return `${years} ${years === 1 ? 'year' : 'years'} ago`;
 	}
 
 	// Update stats based on exercises
-	function updateStats() {
+	async function updateStats() {
 		// Reset stats
 		categoryStats = [
 			{ name: 'Web', total: 0, solved: 0, color: '#10b981' },
@@ -234,12 +271,22 @@
 			}
 		}
 
+		// Update streak
+		const streakResponse = await fetch('/api/exercises/streak', {
+			credentials: 'include'
+		});
+		const streakData = await streakResponse.json();
+		let streak = 0;
+		if (streakData.success) {
+			streak = streakData.streak;
+		}
+
 		// Update user data
 		userData = {
 			totalPoints: allExercises.reduce((sum, ex) => sum + (ex.isCompleted ? ex.points : 0), 0),
 			totalSolved: allExercises.filter(ex => ex.isCompleted).length,
 			totalExercises: allExercises.length,
-			streak: 0, // TODO: Implement streak calculation
+			streak: streak,
 			createdAt: userData.createdAt
 		};
 	}
@@ -274,7 +321,7 @@
 			}
 
 			// Update stats
-			updateStats();
+			await updateStats();
 
 			// Animate progress
 			progressTween.set(completionPercentage);
@@ -311,7 +358,7 @@
 								stroke="white"
 								stroke-width="1"
 								class="transition-all duration-1000 ease-out"
-								style="opacity: {i === 0 ? 1 : 0.7};"
+								style="opacity: {segment.type === 'solved' ? 1 : 0.7};"
 							/>
 						{/each}
 					{/if}
@@ -322,7 +369,7 @@
 					<span class="text-3xl font-bold text-gray-800 dark:text-white"
 						>{completionPercentage}%</span
 					>
-					<span class="text-sm text-gray-500 dark:text-gray-400">Completed</span>
+					<span class="text-sm text-gray-600 dark:text-gray-500">Completed</span>
 				</div>
 			</div>
 
@@ -510,6 +557,7 @@
 								stroke="white"
 								stroke-width="1"
 								class="transition-all duration-1000 ease-out"
+								style="opacity: {segment.name === 'Remaining' ? 0.7 : 1};"
 							/>
 						{/each}
 					{/if}

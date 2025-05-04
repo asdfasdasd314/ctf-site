@@ -32,8 +32,11 @@
 
 			if (data.success) {
 				if (data.user_id) {
+					// Clear old cookie
+					document.cookie = 'vulnerable_auth_user_id=; max-age=0;';
+
 					// Set cookie with user_id
-					document.cookie = `vulnerable_auth_user_id=${data.user_id}; path=/`;
+					document.cookie = `vulnerable_auth_user_id=${data.user_id};`;
 					goto('/exercises/1/dashboard');
 				}
 			}

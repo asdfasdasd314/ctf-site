@@ -170,3 +170,48 @@ pub fn getCompletedExercises(app: *App, req: *httpz.Request, res: *httpz.Respons
     }
     try res.json(.{ .success = false, .err = "Not logged in" }, .{});
 }
+
+pub fn getStreak(app: *App, req: *httpz.Request, res: *httpz.Response) !void {
+    const session_id_opt = req.cookies().get("session_id");
+    if (session_id_opt) |session_id| {
+        const user_id_opt = try app.retrieveUserIdFromSessionId(session_id);
+        if (user_id_opt) |user_id| {
+            defer app.allocator.free(user_id);
+            const completion_times = try app.getExerciseCompletionTimes(user_id);
+
+            // Check if there was an exercise completed in the last 24 hours, and then count back 24 hours until we find a gap
+
+            // The times are sorted, so just check the first one
+            if (completion_times.len > 0) {
+                const first_completion = completion_times[0];
+                const now = std.time.timestamp();
+                const one_day_ago = now - 86400;
+                if (first_completion < one_day_ago) {
+                    try res.json(.{ .success = true, .streak = 0 }, .{});
+                    return;
+                } else {
+                    // Count back 24 hours until we find a gap
+                    var streak: u32 = 0;
+                    var eod = first_completion;
+                    for (completion_times) |completion_time| {
+                        if (completion_time <= eod and completion_time >= eod - 86400) {
+                            streak += 1;
+                            eod -= 86400;
+                        } else if (completion_time > eod) {
+                            // At this point we may just need to keep going down (multiple exercises in a day)
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+                    try res.json(.{ .success = true, .streak = streak }, .{});
+                    return;
+                }
+            } else {
+                try res.json(.{ .success = true, .streak = 0 }, .{});
+                return;
+            }
+        }
+    }
+    try res.json(.{ .success = false, .err = "Not logged in" }, .{});
+}

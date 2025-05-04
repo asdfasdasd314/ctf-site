@@ -48,7 +48,7 @@
 
 	function signOut() {
 		// Clear the cookie by setting it to expire in the past
-		document.cookie = 'vulnerable_auth_user_id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+		document.cookie = 'vulnerable_auth_user_id=; max-age=0;';
 		goto('/exercises/1/login');
 	}
 </script>
