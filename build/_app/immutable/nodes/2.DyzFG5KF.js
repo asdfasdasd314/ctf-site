@@ -1,1 +1,0 @@
-import{c as s,a as m}from"../chunks/6w1StL2M.js";import{p as n,f as p,a as e}from"../chunks/Bm_VgG9E.js";import{s as i}from"../chunks/D_bUp9SZ.js";import{o as f}from"../chunks/BLBxmbFV.js";import{g as c}from"../chunks/BXOo3Ywn.js";function v(r,o){n(o,!0),f(async()=>{await c()});var a=s(),t=p(a);i(t,()=>o.children),m(r,a),e()}export{v as component};
