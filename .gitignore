@@ -1,17 +1,15 @@
-frontend/node_modules
+node_modules
 
 # Output
-frontend/.output
-frontend/.vercel
-frontend/.netlify
-frontend/.wrangler
-frontend/.svelte-kit
-frontend/build
+.output
+.vercel
+.netlify
+.wrangler
+.svelte-kit
+build
 
 # OS
 .DS_Store
-backend/.DS_Store
-frontend/.DS_Store
 Thumbs.db
 
 # Env
@@ -21,20 +19,8 @@ Thumbs.db
 !.env.test
 
 # Vite
-frontend/vite.config.js.timestamp-*
-frontend/vite.config.ts.timestamp-*
-
-# Zig
-backend/.zig-cache
-backend/zig-out
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
 
 # VSCode
 .vscode
-backend/.vscode
-frontend/.vscode
-
-# Database Files
-backend/*.db
-backend/*.sqlite
-backend/*.sqlite3
-backend/db/migrations
