@@ -1,17 +1,15 @@
 # CTF-SITE
 
-### Overview
+## Overview
 
-This is a web-based Capture The Flag (CTF) site designed to teach people concepts in cybersecurity. I learned these concepts and the skills to build this full-stack web app throughout a *Learning Module* as a part of my school's computer science class.
+This is a web-based Capture The Flag (CTF) site designed to teach people concepts in cybersecurity. I self-taugh these concepts and the skills to build this full-stack web app throughout a *Learning Module* as a part of my school's computer science class. I then revisited the project months later to clean things up.
 
-I then revisited the project months later to clean things up.
-
-### Features
+## Features
 
 - 3 custom exercises based on concepts I've run into in my daily life
 - User stat tracking across challenges
 
-### Tech Stack
+## Tech Stack
 
 **Languages**:
 - TypeScript
@@ -29,7 +27,7 @@ I then revisited the project months later to clean things up.
 - Vercel (CI/CD, hosting)
 - Git (version control)
 
-### Architecture
+## Architecture
 
 The application is serverless and written in TypeScript + SvelteKit. The frontend communicates with the backend and Supabase via a REST API. Despite SvelteKit being used as the framework, no SSR occurs. User authentication and the database are handled by Supabase.
 
@@ -41,4 +39,4 @@ The app is deployed to Vercel and uses the `main` branch for production.
 
 ### Usage
 
-Visit www.asdfctf.dev to attempt the challenges. Create an account to save progress, track your streak, and record solved exercises. Hints are available if you get stuck.
+Visit `www.asdfctf.dev` to attempt the challenges. Create an account to save progress, track your streak, and record solved exercises. Hints are available if you get stuck.
