@@ -56,8 +56,8 @@
             return;
         }
         if (!sessionData.session?.user.id) {
-            error = 'An error occurred when trying to access the session data. Please try again.';
-            console.error('Session error:', sessionError);
+            error = 'You are not logged in. Please log in to submit a flag.';
+            isLoading = false;
             return;
         }
         

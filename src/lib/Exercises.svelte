@@ -3,6 +3,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { getExerciseCompletions, type Exercise, type Difficulty, type Category } from './exercises';
 	import { exercisesStore, difficultiesStore, categoriesStore } from './stores';
+	import { supabase } from './supabaseClient';
 
 	// UI state
 	let isLoading = $state(true);
@@ -12,18 +13,31 @@
 	let categories: Category[] = $derived($categoriesStore);
 
 	onMount(async () => {
-		try {
-			const completionData = await getExerciseCompletions();
-			for (let i = 0; i < exercises.length; i++) {
-				completions[exercises[i].exerciseId] = completionData.includes(exercises[i].exerciseId);
-			}
-			isLoading = false;
-		} catch (error) {
+		// If the user is not logged in, set all completions to false
+		const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+		if (sessionError) {
+			console.error('Session error:', sessionError);
+			return;
+		}
+		if (!sessionData.session) {
 			for (let i = 0; i < exercises.length; i++) {
 				completions[exercises[i].exerciseId] = false;
 			}
-			isLoading = false;
 		}
+		else {
+			try {
+				const completionData = await getExerciseCompletions();
+				for (let i = 0; i < exercises.length; i++) {
+					completions[exercises[i].exerciseId] = completionData.includes(exercises[i].exerciseId);
+				}
+			}
+			catch (error) {
+				for (let i = 0; i < exercises.length; i++) {
+					completions[exercises[i].exerciseId] = false;
+				}
+			}
+		}
+		isLoading = false;
 	})
 </script>
 
