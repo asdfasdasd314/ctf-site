@@ -1,44 +1,23 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { e, i, g } from '$lib/adblockerExercies';
 
-    let d = "A/qpp";
-
-    let b = "6ifWq";
-
-    let story = $state('');
+    let flag = $state("flag{I_haven't_been_solved_yet...}");
+    let story = $derived(`Once upon a time, three hackers were trying to hack the secret system. They hacked and hacked as hard as they could, but they couldn't get the flag. But one day the youngest hacker decided to tweak the HTML on the page and changed a single variable in JavaScript, and the flag was revealed: ${flag}`);
     let canvasEl: HTMLCanvasElement | null = $state(null);
     let isLoading = $state(false);
     let error = $state('');
 
-    let a = "x23A1b";
-    let h = "cE2Ks";
-
     async function fetchStory() {
-        let f = "3ajE0";
         isLoading = true;
-        const response = await fetch('/api/exercises/3/story', {
+        const response = await fetch('/api/exercises/3/encrypted-flag', {
             credentials: 'include'
         });
-        a = "vw/M18";
         const data = await response.json();
-        if (data.success) {
-            let c = "xx2jb";
-            const key = a + c + e + b + h + g + f + d + i;
-            const iv = "/KLroCv22qeCF5fg";
-            const authTag = "PQAM7/DhRx46g7eqq2lK6A==";
-
-            // Convert base64 strings to binary arrays
-            const keyArray = new Uint8Array(atob(key).split('').map(c => c.charCodeAt(0)));
-            const ivArray = new Uint8Array(atob(iv).split('').map(c => c.charCodeAt(0)));
-            const authTagArray = new Uint8Array(atob(authTag).split('').map(c => c.charCodeAt(0)));
-
-            // Get the encrypted data and convert to binary
-            const encryptedData = atob(data.story);
-            const encryptedArray = new Uint8Array(encryptedData.length);
-            for (let i = 0; i < encryptedData.length; i++) {
-                encryptedArray[i] = encryptedData.charCodeAt(i);
-            }
+        if (response.ok) {
+            const keyArray = new Uint8Array(data.keyArray.split(',').map((c: string) => Number(c)));
+            const ivArray = new Uint8Array(data.ivArray.split(',').map(Number));
+            const authTagArray = new Uint8Array(data.authTagArray.split(',').map(Number));
+            const encryptedArray = new Uint8Array(data.encryptedArray.split(',').map(Number));
 
             try {
                 // Import the key
@@ -67,7 +46,7 @@
                 );
 
                 const decryptedText = new TextDecoder().decode(decryptedArray);
-                story = decryptedText;
+                flag = decryptedText;
             } catch (e) {
                 console.error('Decryption error:', e);
                 error = 'Failed to decrypt the story. Please try again.';
@@ -92,7 +71,7 @@
         ctx.fillStyle = 'black';
         ctx.textBaseline = 'top';
 
-        const lineHeight = 20;
+        const lineHeight = 100;
         const maxWidth = canvasEl.width - 20;
 
         let x = 10;
@@ -135,30 +114,26 @@
     }
 
     onMount(async () => {
-        await fetchStory();
         drawStory();
 
-        // Initial check for adblocker
-        const adblocker = document.getElementById('turn-off-adblocker');
-        if (adblocker) {
-            document.body.style.overflow = 'hidden';
-        }
-
-        const observer = new MutationObserver((mutationsList) => {
-            for (const mutation of mutationsList) {
-                for (const node of mutation.removedNodes) {
-                    if (node === adblocker) {
-                        observer.disconnect();
+        document.body.style.overflow = 'hidden';
+        const observer = new MutationObserver(async (mutations) => {
+            for (const mutation of mutations) {
+                if (
+                    mutation.type === 'attributes' &&
+                    mutation.attributeName === 'style'
+                ) {
+                    if (document.body.style.overflow !== 'hidden') {
+                        await fetchStory();
+                        drawStory();
                     }
                 }
             }
         });
-
-        // Start observing the parent of the target node
-        // @ts-ignore
-        const parent = adblocker.parentNode;
-        // @ts-ignore
-        observer.observe(parent, { childList: true });
+        observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['style']
+        });
     });
 </script>
 
@@ -183,9 +158,10 @@
     </div>
 
     {#if story}
-        <h2 class="text-2xl font-bold mb-4">A Hacking Story</h2>
-        <p class="text-gray-700">By Gurt</p>
-        <canvas class="mt-10" bind:this={canvasEl} width={800} height={4000}></canvas>
+        <h2 class="text-5xl font-bold mb-12 mt-40 text-center">A Hacking Story</h2>
+        <p class="text-gray-700 text-xl text-center">By Gurt</p>
+        <p class="text-gray-700 text-xl mt-100 mb-160 text-center">Scroll down to read the story...</p>
+        <canvas bind:this={canvasEl} width={600} height={800}></canvas>
     {/if}
 
 
