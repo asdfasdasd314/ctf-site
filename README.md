@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a web-based Capture The Flag (CTF) site designed to teach people concepts in cybersecurity. I self-taugh these concepts and the skills to build this full-stack web app throughout a *Learning Module* as a part of my school's computer science class. I then revisited the project months later to clean things up.
+This is a web-based Capture The Flag (CTF) site designed to teach people concepts in cybersecurity. I self-taught these concepts and the skills to build this full-stack web app throughout a *Learning Module* as a part of my school's computer science class. I then revisited the project months later to clean things up.
 
 ## Features
 
